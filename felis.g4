@@ -73,20 +73,26 @@ WhiteSpace:         [ \t\r\n]+ -> skip; // skip whitespaces
 
 /// rules
 
+functionCall:       (Identifier MemberOfSign)? Identifier '(' (Identifier (EnumerationSign Identifier)*)? ')';
+expressionPiece:    Identifier | functionCall | Constant;
+
+// TODO there is no ()
+powerExpression:    expressionPiece ((PowerOp | RootOp) expressionPiece)*;
+multiplyExpression: powerExpression ((MultiplicationOp | DifferenceOp | ModuloOp) powerExpression)*;
+addExpression:      multiplyExpression ((SumOp | DifferenceOp) multiplyExpression)*;
+compareExpression:  addExpression ((LesserThanOp | LesserOrEqualOp | GreaterThanOp | GreaterOrEqualOp) addExpression)*;
+equalExpression:    compareExpression ((NormalComparOp | ReferenceComparOp) compareExpression)*;
+andExpression:      equalExpression (AndOp equalExpression)*;
+orExpression:       andExpression (OrOp andExpression)*;
+arithmExpression:   orExpression;
+
 conditionPiece:     Identifier | BoolConstant | (Identifier ComparOp Identifier);
 condition:          conditionPiece (BoolOp conditionPiece)*;
 
-// TODO operator order
-// TODO operator ..
-// TODO how to address range of cells?
-
-typedIdentifier:    Identifier TypeSign Type;
-functionCall:       (Identifier MemberOfSign)? Identifier '(' (Identifier (EnumerationSign Identifier)*)? ')';
-expressionPiece:    Identifier | functionCall | Constant;
-arithmExpression:   expressionPiece (ArithmOp expressionPiece)*; // TODO there is no ()
 expression:         ((Identifier AssignOp) | Return)? arithmExpression | condition EndSign;
 block:              '{' (expression | varDeclaration | ifStatement | whileStatement)* '}'; // TODO analysis of recursion
 
+typedIdentifier:    Identifier TypeSign Type;
 varDeclaration:     Variable typedIdentifier (NormalAssignOp expression) | EndSign;
 elseStatement:      Else block;
 ifStatement:        If '(' condition ')' block elseStatement?;

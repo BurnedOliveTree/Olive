@@ -74,7 +74,6 @@ This document is about vision of Felis, a strongly typed language that is being 
     - () (function call, expression prioritisation)
     - infix . (function call, method call, attribute)
     - infix ,
-    - infix .. (range)
 
 ### Syntax
 
