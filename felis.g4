@@ -65,23 +65,20 @@ Identifier:         [A-Za-z_]+; // to be changed to library function isLetter() 
 Constant:           StringConstant | NumConstant | BoolConstant;
 Type:               AnyType | UnitType | IntType | FloatType | NumberType | StringType | BoolType;
 AssignOp:           NormalAssignOp | ReferenceAssignOp | SumAssignOp | DifferenceAssingOp | MultiplicationAssingOp | PowerAssignOp | DivisionAssignOp | RootAssignOp | ModuloAssignOp;
-ComparOp:           NormalComparOp | ReferenceComparOp | LesserThanOp | LesserOrEqualOp | GreaterThanOp | GreaterOrEqualOp;
-BoolOp:             NotOp | AndOp | OrOp | IsOp;
 Comment:            CommentSign ~('\n')* '\n'; // line comment
 WhiteSpace:         [ \t\r\n]+ -> skip; // skip whitespaces
 
 /// rules
-// TODO there is no ()
 
 functionCall:       (Identifier MemberOfSign)? Identifier '(' (Identifier (EnumerationSign Identifier)*)? ')';
 
-expressionPiece:    Identifier | functionCall | Constant;
+expressionPiece:    Identifier | functionCall | Constant | ('(' arithmExpression ')'); // TODO analysis of recursion
 powerExpression:    expressionPiece ((PowerOp | RootOp) expressionPiece)*;
 multiplyExpression: powerExpression ((MultiplicationOp | DifferenceOp | ModuloOp) powerExpression)*;
 addExpression:      multiplyExpression ((SumOp | DifferenceOp) multiplyExpression)*;
 arithmExpression:   addExpression;
 
-conditionPiece:     Identifier | BoolConstant | (Identifier ComparOp Identifier);
+conditionPiece:     Identifier | functionCall | BoolConstant | ('(' condition ')'); // TODO analysis of recursion
 compareExpression:  conditionPiece ((LesserThanOp | LesserOrEqualOp | GreaterThanOp | GreaterOrEqualOp) conditionPiece)*;
 notExpression:      NotOp* compareExpression;
 equalExpression:    notExpression ((NormalComparOp | ReferenceComparOp) notExpression)*;
