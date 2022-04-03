@@ -19,7 +19,7 @@ BoolType:           'Bool';
 SumOp:              '+';
 DifferenceOp:       '-';
 MultiplicationOp:   '*';
-PowerOp:            '^';
+ExponentOp:         '^';
 DivisionOp:         '/';
 RootOp:             '|';
 ModuloOp:           '%';
@@ -34,7 +34,7 @@ ReferenceAssignOp:  '&=';
 SumAssignOp:        '+=';
 DifferenceAssingOp: '-=';
 MultiplicationAssingOp: '*=';
-PowerAssignOp:      '^=';
+ExponentAssignOp:   '^=';
 DivisionAssignOp:   '/=';
 RootAssignOp:       '|=';
 ModuloAssignOp:     '%=';
@@ -64,7 +64,7 @@ Return:             'return';
 Identifier:         [A-Za-z_]+; // to be changed to library function isLetter() after generation
 Constant:           StringConstant | NumConstant | BoolConstant;
 Type:               AnyType | UnitType | IntType | FloatType | NumberType | StringType | BoolType;
-AssignOp:           NormalAssignOp | ReferenceAssignOp | SumAssignOp | DifferenceAssingOp | MultiplicationAssingOp | PowerAssignOp | DivisionAssignOp | RootAssignOp | ModuloAssignOp;
+AssignOp:           NormalAssignOp | ReferenceAssignOp | SumAssignOp | DifferenceAssingOp | MultiplicationAssingOp | ExponentAssignOp | DivisionAssignOp | RootAssignOp | ModuloAssignOp;
 Comment:            CommentSign ~('\n')* '\n'; // line comment
 WhiteSpace:         [ \t\r\n]+ -> skip; // skip whitespaces
 
@@ -73,8 +73,8 @@ WhiteSpace:         [ \t\r\n]+ -> skip; // skip whitespaces
 functionCall:       (Identifier MemberOfSign)? Identifier '(' (Identifier (EnumerationSign Identifier)*)? ')';
 
 expressionPiece:    Identifier | functionCall | Constant | ('(' arithmExpression ')'); // TODO analysis of recursion
-powerExpression:    expressionPiece ((PowerOp | RootOp) expressionPiece)*;
-multiplyExpression: powerExpression ((MultiplicationOp | DifferenceOp | ModuloOp) powerExpression)*;
+exponentExpression: expressionPiece ((ExponentOp | RootOp) expressionPiece)*;
+multiplyExpression: exponentExpression ((MultiplicationOp | DifferenceOp | ModuloOp) exponentExpression)*;
 addExpression:      multiplyExpression ((SumOp | DifferenceOp) multiplyExpression)*;
 arithmExpression:   addExpression;
 
