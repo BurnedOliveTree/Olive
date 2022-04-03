@@ -1,21 +1,77 @@
 grammar felis;
 
-// TODO? Tokens
+/// constants
 
-Identifier:         [A-Za-z_]+;         // to be changed to library function isLetter() after generation
-Digit:              [0-9];
-Type:               'Unit' | 'Int' | 'Float' | 'Number' | 'String' | 'Bool';
-ArithmOp:           '+' | '-' | '*' | '/' | '^' | '|' | '%';
-AssignOp:           '=' | '&=' | '+=' | '-=' | '*=' | '/=' | '^=' | '|=' | '%=';
-ComparOp:           '==' | '&==' | '>' | '>=' | '<' | '<=';
-BoolOp:             'not' | 'and' | 'or' | 'is';
-Comment:            '#' ~('\n')* '\n';   // line comment
-WhiteSpace:         [ \t\r\n]+ -> skip;  // skip whitespaces
-
-stringConstant:     '"' . '"';
-numConstant:        Digit+ ('.' Digit+)?;
+StringConstant:     '"' . '"';
+NumConstant:        [0-9]+ ('.' [0-9]+)?;
 BoolConstant:       'true' | 'false';
-constant:           stringConstant | numConstant | BoolConstant;
+
+/// keywords and operators
+
+AnyType:            'Any';
+UnitType:           'Unit';
+IntType:            'Int';
+FloatType:          'Float';
+NumberType:         'Number';
+StringType:         'String';
+BoolType:           'Bool';
+
+SumOp:              '+';
+DifferenceOp:       '-';
+MultiplicationOp:   '*';
+PowerOp:            '^';
+DivisionOp:         '/';
+RootOp:             '|';
+ModuloOp:           '%';
+
+NotOp:              'not';
+AndOp:              'and';
+OrOp:               'or';
+IsOp:               'is';
+
+NormalAssignOp:     '=';
+ReferenceAssignOp:  '&=';
+SumAssignOp:        '+=';
+DifferenceAssingOp: '-=';
+MultiplicationAssingOp: '*=';
+PowerAssignOp:      '^=';
+DivisionAssignOp:   '/=';
+RootAssignOp:       '|=';
+ModuloAssignOp:     '%=';
+
+NormalComparOp:     '==';
+ReferenceComparOp:  '&==';
+LesserThanOp:       '<';
+LesserOrEqualOp:    '<=';
+GreaterThanOp:      '>';
+GreaterOrEqualOp:   '>=';
+
+TypeSign:           ':';
+CommentSign:        '#';
+EndSign:            ';';
+EnumerationSign:    ',';
+MemberOfSign:       '.';
+
+Variable:           'var';
+Function:           'fun';
+If:                 'if';
+Else:               'else';
+While:              'while';
+Return:             'return';
+
+/// token groups
+
+Identifier:         [A-Za-z_]+; // to be changed to library function isLetter() after generation
+Constant:           StringConstant | NumConstant | BoolConstant;
+Type:               AnyType | UnitType | IntType | FloatType | NumberType | StringType | BoolType;
+ArithmOp:           SumOp | DifferenceOp | MultiplicationOp | PowerOp | DivisionOp | RootOp | ModuloOp;
+AssignOp:           NormalAssignOp | ReferenceAssignOp | SumAssignOp | DifferenceAssingOp | MultiplicationAssingOp | PowerAssignOp | DivisionAssignOp | RootAssignOp | ModuloAssignOp;
+ComparOp:           NormalComparOp | ReferenceComparOp | LesserThanOp | LesserOrEqualOp | GreaterThanOp | GreaterOrEqualOp;
+BoolOp:             NotOp | AndOp | OrOp | IsOp;
+Comment:            CommentSign ~('\n')* '\n'; // line comment
+WhiteSpace:         [ \t\r\n]+ -> skip; // skip whitespaces
+
+/// rules
 
 conditionPiece:     Identifier | BoolConstant | (Identifier ComparOp Identifier);
 condition:          conditionPiece (BoolOp conditionPiece)*;
@@ -24,16 +80,15 @@ condition:          conditionPiece (BoolOp conditionPiece)*;
 // TODO operator ..
 // TODO how to address range of cells?
 
-typedIdentifier:    Identifier':' Type;
-functionCall:       (Identifier '.')? Identifier '(' Identifier? (',' Identifier)* ')'; // TODO this production lets through a lonely , at the start
-expressionPiece:    Identifier | functionCall | constant; // TODO functionCall starts with Identifier
+typedIdentifier:    Identifier TypeSign Type;
+functionCall:       (Identifier MemberOfSign)? Identifier '(' (Identifier (EnumerationSign Identifier)*)? ')';
+expressionPiece:    Identifier | functionCall | Constant;
 arithmExpression:   expressionPiece (ArithmOp expressionPiece)*; // TODO there is no ()
-expression:         ((Identifier AssignOp) | 'return')? arithmExpression | condition ';';
-block:              '{' expression* '}';
+expression:         ((Identifier AssignOp) | Return)? arithmExpression | condition EndSign;
+block:              '{' (expression | varDeclaration | ifStatement | whileStatement)* '}'; // TODO analysis of recursion
 
-// TODO this all be should available from with-in a block, except for funDecl
-varDeclaration:     'var' typedIdentifier ('=' expression)? ';';
-elseStatement:      'else' block;
-ifStatement:        'if' '(' condition ')' block elseStatement?;
-whileStatement:     'while' '(' condition ')' block;
-funDeclaration:     'fun' Identifier '(' typedIdentifier* ')' ':' Type block;
+varDeclaration:     Variable typedIdentifier (NormalAssignOp expression) | EndSign;
+elseStatement:      Else block;
+ifStatement:        If '(' condition ')' block elseStatement?;
+whileStatement:     While '(' condition ')' block;
+funDeclaration:     Function Identifier '(' typedIdentifier* ')' TypeSign Type block;
