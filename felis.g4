@@ -61,7 +61,7 @@ Return:             'return';
 
 /// token groups
 
-Identifier:         [A-Za-z_]+; // to be changed to library function isLetter() after generation
+Identifier:         [A-Za-z_]+; // to be changed to a library function isLetter() after generation
 Constant:           StringConstant | NumConstant | BoolConstant;
 Type:               AnyType | UnitType | IntType | FloatType | NumberType | StringType | BoolType;
 AssignOp:           NormalAssignOp | ReferenceAssignOp | SumAssignOp | DifferenceAssingOp | MultiplicationAssingOp | ExponentAssignOp | DivisionAssignOp | RootAssignOp | ModuloAssignOp;
@@ -70,15 +70,17 @@ WhiteSpace:         [ \t\r\n]+ -> skip; // skip whitespaces
 
 /// rules
 
-functionCall:       (Identifier MemberOfSign)? Identifier '(' (Identifier (EnumerationSign Identifier)*)? ')';
+idOrConst:          Identifier | Constant;
+functionCall:       (Identifier MemberOfSign)? Identifier '(' (idOrConst (EnumerationSign idOrConst)*)? ')';
 
-expressionPiece:    Identifier | functionCall | Constant | ('(' arithmExpression ')'); // TODO analysis of recursion
+expressionPiece:    Identifier | functionCall | NumConstant | ('(' arithmExpression ')');
 exponentExpression: expressionPiece ((ExponentOp | RootOp) expressionPiece)*;
-multiplyExpression: exponentExpression ((MultiplicationOp | DifferenceOp | ModuloOp) exponentExpression)*;
+inverseExpression:  DifferenceOp? exponentExpression;
+multiplyExpression: inverseExpression ((MultiplicationOp | DifferenceOp | ModuloOp) inverseExpression)*;
 addExpression:      multiplyExpression ((SumOp | DifferenceOp) multiplyExpression)*;
 arithmExpression:   addExpression;
 
-conditionPiece:     Identifier | functionCall | BoolConstant | ('(' condition ')'); // TODO analysis of recursion
+conditionPiece:     Identifier | functionCall | BoolConstant | ('(' condition ')');
 compareExpression:  conditionPiece ((LesserThanOp | LesserOrEqualOp | GreaterThanOp | GreaterOrEqualOp) conditionPiece)*;
 notExpression:      NotOp* compareExpression;
 equalExpression:    notExpression ((NormalComparOp | ReferenceComparOp) notExpression)*;
@@ -87,7 +89,7 @@ orExpression:       andExpression (OrOp andExpression)*;
 condition:          orExpression;
 
 expression:         ((Identifier AssignOp) | Return)? arithmExpression | condition EndSign;
-block:              '{' (expression | varDeclaration | ifStatement | whileStatement)* '}'; // TODO analysis of recursion
+block:              '{' (expression | varDeclaration | ifStatement | whileStatement)* '}';
 
 typedIdentifier:    Identifier TypeSign Type;
 varDeclaration:     Variable typedIdentifier (NormalAssignOp expression) | EndSign;
