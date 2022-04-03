@@ -13,9 +13,9 @@ This document is about vision of Felis, a strongly typed language that is being 
                 - Float
             - String
             - Boolean
-- Variable and function names can be created from this characters: [A-Za-z_]
+- Variable and function names can be created from letters and underscore characters
     - Variables and functions can't be named the same as keywords
-    - Variables and functions can't have the same name
+    - Variables and functions can't have the same name, but functions themselves can have the same name, if they differ in terms of their argument and return types
 - Function f declared as ```fun f(a: Int, b: Int) {}``` can be called by:
     - f(a, b)
     - a.f(b)
@@ -129,13 +129,13 @@ fun isPerfectNumber(number: Int): Bool {
 
 Variables and functions have to have their type explicitly stated. 
 
-Variables are automatically destroyed when all their strong references are deleted.
+Variables are automatically destroyed when all their references are deleted.
 
 Language has no classes, so there will be no access modificators (const, public, private, etc.)
 
 While the type `Any` is present in the language, it's usage will be discouraged with an appropriate warning.
 
-There will be a `main` function, and all the user functions will have to be defined above it.
+There will be a `main` function, and all the user functions will have to be defined above it (there will be no nested functions).
 
 ## Implementation method
 
@@ -143,9 +143,7 @@ There will be a mutable map of function names (plus argument and return types) t
 
 Variables similarly will be kept in a map of variable names to variable objects. These objects will hold it's value, type, and a set of names of cells.
 
-That means that a variable will be deleted upon end of their scope, or, when they're a weak reference, upon the deletion of their value.
-
-Upon variable / function declaration, the name will be checked if it is already present in map keys.
+Upon variable / function declaration, the name will be checked if it is already present in map keys. If it is, the declaration will be declared as an error to the user.
 
 Since there is no inheritance, a function `fun f(x: Number): Number`, given that in a call the `x` is an Int, will firstly be searched under "fIntNumber" and if that fails, than it will be searched under "fNumberNumber".
 
@@ -161,7 +159,7 @@ Since Kotlin by default compiles to Java bytecode, I will pack the lexer, parser
 
 ## Testing
 
-There will be unit tests for each keyword and operator, checking if they work as intented, and there also will be integration tests: one with a happy-path, with some sort of algorithm, for example a binary search, checking if all the components will work as intended, and a few bad-path, which will have improper syntax written in them, and check that our compiler will also correctly respond to that situation.
+There will be unit tests for each keyword and operator, checking if they work as intented, and there also will be integration tests: one with a happy-path, with some sort of algorithm, for example a is a number a perfect number, checking if all the components will work as intended, and a few bad-path, which will have improper syntax written in them, and check that our compiler will also correctly respond to that situation.
 
 ## Application
 
