@@ -76,15 +76,15 @@ data class LexerToken(val type: TokenType, val value: Any?)
 class Lexer(sourceCode: String) {
     private val tokens: ArrayDeque<LexerToken> = ArrayDeque()
     private val iterator: ArrayDeque<Char> = ArrayDeque()
+    private var currentChar: Char = '\n'
     private var lineNumber = 0
     private var columnNumber = 0
 
     init {
         sourceCode.forEach { iterator.addLast(it) }
-        var character: Char
         while (!iterator.isEmpty()) {
-            character = iterator.removeFirst()
-            when (character) {
+            currentChar = iterator.removeFirst()
+            when (currentChar) {
                 ' ' -> columnNumber++
                 '\t' -> columnNumber += 4
                 '\n' -> {
@@ -95,39 +95,60 @@ class Lexer(sourceCode: String) {
                 else -> {
                     columnNumber++
                     when {
-                        character.isLetter() -> keywordOrIdentifier(character)
-                        character.isDigit() -> numericConstant(character)
-                        character == '"' -> stringConstant(character)
-                        else -> operator(character)
+                        currentChar.isLetter() -> keywordOrIdentifier()
+                        currentChar.isDigit() -> numericConstant()
+                        currentChar == '"' -> stringConstant()
+                        else -> operator()
                     }
                 }
             }
         }
     }
 
-    private fun keywordOrIdentifier(char: Char) {
+    private fun keywordOrIdentifier() {
         TODO()
     }
 
-    private fun numericConstant(char: Char) {
+    private fun numericConstant() {
+        var number: String = currentChar.toString()
+        if (currentChar != '0') {
+            while (iterator.first().isDigit()) {
+                currentChar = iterator.removeFirst()
+                number += currentChar
+                columnNumber++
+            }
+        }
+        if (iterator.first() == '.') {
+            currentChar = iterator.removeFirst()
+            number += currentChar
+            columnNumber++
+            if (!iterator.first().isDigit())
+                throw LexisError(currentChar, lineNumber, columnNumber)
+            while (iterator.first().isDigit()) {
+                currentChar = iterator.removeFirst()
+                number += currentChar
+                columnNumber++
+            }
+            tokens.addLast(LexerToken(TokenType.NumConstant, number.toDouble()))
+        } else
+            tokens.addLast(LexerToken(TokenType.NumConstant, number.toInt()))
+    }
+
+    private fun stringConstant() {
         TODO()
     }
 
-    private fun stringConstant(char: Char) {
-        TODO()
-    }
-
-    private fun operator(char: Char) {
+    private fun operator() {
         fun assignOperator(normalTokenType: TokenType, assignTokenType: TokenType) {
             if (iterator.first() == '=') {
-                iterator.removeFirst()
+                currentChar = iterator.removeFirst()
                 columnNumber++
                 tokens.addLast(LexerToken(assignTokenType, null))
             } else
                 tokens.addLast(LexerToken(normalTokenType, null))
         }
 
-        when (char) {
+        when (currentChar) {
             '+' -> assignOperator(TokenType.SumOp, TokenType.SumAssignOp)
             '-' -> assignOperator(TokenType.DifferenceOp, TokenType.DifferenceAssignOp)
             '*' -> assignOperator(TokenType.MultiplicationOp, TokenType.MultiplicationAssignOp)
@@ -143,7 +164,7 @@ class Lexer(sourceCode: String) {
             ';' -> tokens.addLast(LexerToken(TokenType.EndSign, null))
             ',' -> tokens.addLast(LexerToken(TokenType.EnumerationSign, null))
             '.' -> tokens.addLast(LexerToken(TokenType.MemberReferenceSign, null))
-            else -> throw LexisError(char, lineNumber, columnNumber)
+            else -> throw LexisError(currentChar, lineNumber, columnNumber)
         }
     }
 
