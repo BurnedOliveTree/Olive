@@ -3,7 +3,7 @@ grammar felis;
 /// constants
 
 StringConstant:     '"' ('\\' | ~[\\"]) '"';
-NumConstant:        [1-9] [0-9]* ('.' [0-9]+)?;
+NumConstant:        (([1-9] [0-9]*) | [0]) ('.' [0-9]+)?;
 BoolConstant:       'true' | 'false';
 
 /// keywords and operators
