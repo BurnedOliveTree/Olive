@@ -1,82 +1,149 @@
 package lexer
 
-import kotlin.collections.ArrayDeque
+enum class TokenType {
+    StringConstant,
+    NumConstant,
+    BoolConstant,
 
-internal fun List<TokenType>.toRegExAlteration() =
-    this.joinToString(separator = " | ") { "${it.regex}" }
+    UnitType,
+    IntType,
+    FloatType,
+    NumberType,
+    StringType,
+    BoolType,
 
-enum class TokenType(val regex: Regex) {
-    StringConstant(Regex("\" ('\\\\' | ~[\\\\\"]) \"")),
-    NumConstant(Regex("(([1-9][0-9]*) | [0]) ('.' [0-9]+)?")),
-    BoolConstant(Regex("true | false")),
+    SumOp,
+    DifferenceOp,
+    MultiplicationOp,
+    ExponentOp,
+    DivisionOp,
+    RootOp,
+    ModuloOp,
 
-    UnitType(Regex("Unit")),
-    IntType(Regex("Int")),
-    FloatType(Regex("Float")),
-    NumberType(Regex("Number")),
-    StringType(Regex("String")),
-    BoolType(Regex("Bool")),
+    NotOp,
+    AndOp,
+    OrOp,
+    IsOp,
+    CastOp,
 
-    SumOp(Regex("\\+")),
-    DifferenceOp(Regex("-")),
-    MultiplicationOp(Regex("\\*")),
-    ExponentOp(Regex("\\^")),
-    DivisionOp(Regex("/")),
-    RootOp(Regex("\\|")),
-    ModuloOp(Regex("%")),
+    NormalAssignOp,
+    ReferenceAssignOp,
+    SumAssignOp,
+    DifferenceAssignOp,
+    MultiplicationAssignOp,
+    ExponentAssignOp,
+    DivisionAssignOp,
+    RootAssignOp,
+    ModuloAssignOp,
 
-    NotOp(Regex("not")),
-    AndOp(Regex("and")),
-    OrOp(Regex("or")),
-    IsOp(Regex("is")),
-    CastOp(Regex("as")),
+    NormalComparisonOp,
+    ReferenceComparisonOp,
+    LesserThanOp,
+    LesserOrEqualOp,
+    GreaterThanOp,
+    GreaterOrEqualOp,
 
-    NormalAssignOp(Regex("=")),
-    ReferenceAssignOp(Regex("&=")),
-    SumAssignOp(Regex("\\+=")),
-    DifferenceAssignOp(Regex("-=")),
-    MultiplicationAssignOp(Regex("\\*=")),
-    ExponentAssignOp(Regex("\\^=")),
-    DivisionAssignOp(Regex("/=")),
-    RootAssignOp(Regex("\\|=")),
-    ModuloAssignOp(Regex("%=")),
+    TypeSign,
+    CommentSign,
+    EndSign,
+    EnumerationSign,
+    MemberReferenceSign,
 
-    NormalComparisonOp(Regex("==")),
-    ReferenceComparisonOp(Regex("&==")),
-    LesserThanOp(Regex("<")),
-    LesserOrEqualOp(Regex("<=")),
-    GreaterThanOp(Regex(">")),
-    GreaterOrEqualOp(Regex(">=")),
+    Variable,
+    If,
+    Else,
+    While,
+    Return,
 
-    TypeSign(Regex(":")),
-    CommentSign(Regex("#")),
-    EndSign(Regex(".")),
-    EnumerationSign(Regex(",")),
-    MemberReferenceSign(Regex(".")),
+    Identifier,
+    Constant,
+    AssignOp,
+    Comment,
+    WhiteSpace;
 
-    Variable(Regex("var")),
-    If(Regex("if")),
-    Else(Regex("else")),
-    While(Regex("while")),
-    Return(Regex("return")),
+    fun isConstant(): Boolean =
+        this in listOf(BoolConstant, NumConstant, StringConstant)
 
-    Identifier(Regex("[A-Za-z_]+")), // TODO change to isLetter or smth
-    Constant(Regex(listOf(StringConstant, NumConstant, BoolConstant).toRegExAlteration())),
-    Type(Regex(listOf(UnitType, IntType, FloatType, NumberType, StringType, BoolType).toRegExAlteration())),
-    AssignOp(Regex(listOf(NormalAssignOp, ReferenceAssignOp, SumAssignOp, DifferenceAssignOp, MultiplicationAssignOp, ExponentAssignOp, DivisionAssignOp, RootAssignOp, ModuloAssignOp).toRegExAlteration())),
-    Comment(Regex("${CommentSign.regex} ~(\n)* \n")),
-    WhiteSpace(Regex("[ \t\r\n]+"));
+    fun isType(): Boolean =
+        this in listOf(UnitType, IntType, FloatType, NumberType, StringType, BoolType)
+
+    fun isAssignOp(): Boolean =
+        this in listOf(NormalAssignOp, ReferenceAssignOp, SumAssignOp, DifferenceAssignOp, MultiplicationAssignOp, ExponentAssignOp, DivisionAssignOp, RootAssignOp, ModuloAssignOp)
 }
 
-data class LexerToken(val type: TokenType, val value: Any) {
-}
+data class LexerToken(val type: TokenType, val value: Any?)
 
 class Lexer(sourceCode: String) {
     private val tokens: ArrayDeque<LexerToken> = ArrayDeque()
+    private val iterator: ArrayDeque<Char> = ArrayDeque()
+    private var lineNumber = 0
+    private var columnNumber = 0
 
     init {
-        for (character in sourceCode) {
-            println(character)
+        sourceCode.forEach { iterator.addLast(it) }
+        var character: Char
+        while (!iterator.isEmpty()) {
+            character = iterator.removeFirst()
+            when (character) {
+                ' ' -> columnNumber++
+                '\t' -> columnNumber += 4
+                '\n' -> {
+                    lineNumber++
+                    columnNumber = 0
+                }
+                // TODO: handle comment
+                else -> {
+                    columnNumber++
+                    when {
+                        character.isLetter() -> keywordOrIdentifier(character)
+                        character.isDigit() -> numericConstant(character)
+                        character == '"' -> stringConstant(character)
+                        else -> operator(character)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun keywordOrIdentifier(char: Char) {
+        TODO()
+    }
+
+    private fun numericConstant(char: Char) {
+        TODO()
+    }
+
+    private fun stringConstant(char: Char) {
+        TODO()
+    }
+
+    private fun operator(char: Char) {
+        fun assignOperator(normalTokenType: TokenType, assignTokenType: TokenType) {
+            if (iterator.first() == '=') {
+                iterator.removeFirst()
+                columnNumber++
+                tokens.addLast(LexerToken(assignTokenType, null))
+            } else
+                tokens.addLast(LexerToken(normalTokenType, null))
+        }
+
+        when (char) {
+            '+' -> assignOperator(TokenType.SumOp, TokenType.SumAssignOp)
+            '-' -> assignOperator(TokenType.DifferenceOp, TokenType.DifferenceAssignOp)
+            '*' -> assignOperator(TokenType.MultiplicationOp, TokenType.MultiplicationAssignOp)
+            '/' -> assignOperator(TokenType.DivisionOp, TokenType.DivisionAssignOp)
+            '^' -> assignOperator(TokenType.ExponentOp, TokenType.ExponentAssignOp)
+            '|' -> assignOperator(TokenType.RootOp, TokenType.RootAssignOp)
+            '%' -> assignOperator(TokenType.ModuloOp, TokenType.ModuloAssignOp)
+            '<' -> assignOperator(TokenType.LesserThanOp, TokenType.LesserOrEqualOp)
+            '>' -> assignOperator(TokenType.GreaterThanOp, TokenType.GreaterOrEqualOp)
+            '=' -> assignOperator(TokenType.NormalAssignOp, TokenType.NormalComparisonOp)
+            '&' -> TODO()
+            ':' -> tokens.addLast(LexerToken(TokenType.TypeSign, null))
+            ';' -> tokens.addLast(LexerToken(TokenType.EndSign, null))
+            ',' -> tokens.addLast(LexerToken(TokenType.EnumerationSign, null))
+            '.' -> tokens.addLast(LexerToken(TokenType.MemberReferenceSign, null))
+            else -> throw LexisError(char, lineNumber, columnNumber)
         }
     }
 
