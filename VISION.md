@@ -6,13 +6,12 @@ This document is about vision of Felis, a strongly typed language that is being 
 
 - Strong, static typing
     - Type system:
-        - Any
-            - Unit
-            - Number
-                - Integer
-                - Float
-            - String
-            - Boolean
+        - Unit
+        - Number
+            - Integer
+            - Float
+        - String
+        - Boolean
 - Variable and function names can be created from letters and underscore characters
     - Variables and functions can't be named the same as keywords
     - Variables and functions can't have the same name, but functions themselves can have the same name, if they differ in terms of their argument and return types
@@ -20,6 +19,7 @@ This document is about vision of Felis, a strongly typed language that is being 
     - f(a, b)
     - a.f(b)
 - All variables are references to mutable objects
+    - That's why there is an operator copying the value of the object "=", and an operator copying only the reference "&="
 - All expressions must be put inside a function
 
 ## Specification
@@ -29,8 +29,6 @@ This document is about vision of Felis, a strongly typed language that is being 
 #### Keywords
 
 `var` - variable definition
-\
-`fun` - function definition
 \
 `if` - condition
 \
@@ -47,6 +45,8 @@ This document is about vision of Felis, a strongly typed language that is being 
 `or` - logical or (boolean)
 \
 `is` - `a is Int` means "is a an Int?"
+\
+`as` - cast operator
 
 #### Operators
 
@@ -61,7 +61,7 @@ This document is about vision of Felis, a strongly typed language that is being 
     - infix % (modulo)
 - Comparison
     - infix == (objects (values) are equal)
-    - infix &== (object references (adresses) are equal)
+    - infix &== (object references (addresses) are equal)
     - infix > (greater)
     - infix < (lesser)
     - infix >= (greater or equal)
@@ -100,7 +100,7 @@ while (newVariable > 100 and oldVariable < -100) {
 ```
 Function declaration
 ```
-fun add (first: Int, second: Int): Int {
+add (first: Int, second: Int): Int {
     return first + second;
     var thisCodeWontExecute: Int;
 }
@@ -112,7 +112,7 @@ Inline comments
 
 Complex example
 ```
-fun isPerfectNumber(number: Int): Bool {
+isPerfectNumber(number: Int): Bool {
     count: Int = 0;
     iterator: Int = 1;
     while (iterator < number) {
@@ -123,6 +123,11 @@ fun isPerfectNumber(number: Int): Bool {
     }
     return count == number;
 }
+
+main(): Unit {
+    var number: Float = 6.5;
+    isPerfectNumber(number as Int);
+}
 ```
 
 ## Functionality analysis
@@ -132,8 +137,6 @@ Variables and functions have to have their type explicitly stated.
 Variables are automatically destroyed when all their references are deleted.
 
 Language has no classes, so there will be no access modificators (const, public, private, etc.)
-
-While the type `Any` is present in the language, it's usage will be discouraged with an appropriate warning.
 
 There will be a `main` function, and all the user functions will have to be defined above it (there will be no nested functions).
 
@@ -160,29 +163,3 @@ Since Kotlin by default compiles to Java bytecode, I will pack the lexer, parser
 ## Testing
 
 There will be unit tests for each keyword and operator, checking if they work as intented, and there also will be integration tests: one with a happy-path, with some sort of algorithm, for example a is a number a perfect number, checking if all the components will work as intended, and a few bad-path, which will have improper syntax written in them, and check that our compiler will also correctly respond to that situation.
-
-## Application
-
-The application will be written in Kotlin using the Compose Multiplatform framework or the native Android UI (yet to be decided). Gradle will also be used to build this app.
-
-The rough outline of the design can be seen below:
-
-![Screens](screens.png)
-
-As you can see, all the user functions will be declared in a separate space under the table. They will be later added on top of the source code, while all the expressions present in table cells will be put inside the `main` function. Cell declarations will be above their assignments, at the start of `main`, with the type of `Any`, to make them easily accesible in every other cell.
-
-Example of the generated source code of a spreadsheet:
-
-```
-fun add(first: Int, second: Int): Int {
-    return first + second;
-}
-
-fun main(): Unit {
-    var A1: Any;
-    var A2: Any;
-
-    A1 = 3;
-    A2 = add(A1, 4);
-}
-```
