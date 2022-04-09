@@ -49,6 +49,11 @@ enum class TokenType {
     EnumerationSign,
     MemberReferenceSign,
 
+    LeftParenthesesSign,
+    RightParenthesesSign,
+    LeftBraceSign,
+    RightBraceSign,
+
     Variable,
     If,
     Else,
@@ -259,6 +264,10 @@ class Lexer(sourceCode: String) {
             ';' -> tokens.addLast(LexerToken(TokenType.EndSign))
             ',' -> tokens.addLast(LexerToken(TokenType.EnumerationSign))
             '.' -> tokens.addLast(LexerToken(TokenType.MemberReferenceSign))
+            '(' -> tokens.addLast(LexerToken(TokenType.LeftParenthesesSign))
+            ')' -> tokens.addLast(LexerToken(TokenType.RightParenthesesSign))
+            '{' -> tokens.addLast(LexerToken(TokenType.LeftBraceSign))
+            '}' -> tokens.addLast(LexerToken(TokenType.RightBraceSign))
             else -> throw LexisError(currentChar, lineNumber, columnNumber)
         }
     }
@@ -269,5 +278,9 @@ class Lexer(sourceCode: String) {
 
     fun peek(): LexerToken {
         return tokens.first()
+    }
+
+    fun hasNext(): Boolean {
+        return tokens.firstOrNull() != null
     }
 }
