@@ -125,7 +125,7 @@ class Lexer(sourceCode: String) {
             'N' -> identifier = matchKeyword(TokenType.NumberType,"N", "umber")
             'S' -> identifier = matchKeyword(TokenType.StringType,"S", "tring")
             'U' -> identifier = matchKeyword(TokenType.UnitType,"U", "nit")
-            'a' -> { // and, as
+            'a' -> {
                 if (iterator.first().isLetter()) {
                     currentChar = iterator.removeFirst()
                     identifier += currentChar
@@ -226,7 +226,15 @@ class Lexer(sourceCode: String) {
             '<' -> assignOperator(TokenType.LesserThanOp, TokenType.LesserOrEqualOp)
             '>' -> assignOperator(TokenType.GreaterThanOp, TokenType.GreaterOrEqualOp)
             '=' -> assignOperator(TokenType.NormalAssignOp, TokenType.NormalComparisonOp)
-            '&' -> TODO()
+            '&' -> {
+                if (iterator.first() == '=') {
+                    currentChar = iterator.removeFirst()
+                    columnNumber++
+                    assignOperator(TokenType.ReferenceAssignOp, TokenType.ReferenceComparisonOp)
+                } else {
+                    throw LexisError(currentChar, lineNumber, columnNumber)
+                }
+            }
             ':' -> tokens.addLast(LexerToken(TokenType.TypeSign))
             ';' -> tokens.addLast(LexerToken(TokenType.EndSign))
             ',' -> tokens.addLast(LexerToken(TokenType.EnumerationSign))
