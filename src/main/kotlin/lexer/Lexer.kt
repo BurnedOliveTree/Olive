@@ -88,13 +88,13 @@ class Lexer(sourceCode: String) {
                     lineNumber++
                     columnNumber = 0
                 }
-                // TODO: handle comment
                 else -> {
                     columnNumber++
                     when {
                         currentChar.isLetter() || currentChar == '_' -> keywordOrIdentifier()
                         currentChar.isDigit() -> numericConstant()
                         currentChar == '"' -> stringConstant()
+                        currentChar == '#' -> comment()
                         else -> operator()
                     }
                 }
@@ -202,7 +202,25 @@ class Lexer(sourceCode: String) {
     }
 
     private fun stringConstant() {
-        TODO()
+        var stringConstant = ""
+        while (iterator.first() != '"') {
+            currentChar = iterator.removeFirst()
+            stringConstant += currentChar
+            columnNumber++
+            // TODO add escaping
+        }
+        tokens.addLast(LexerToken(TokenType.StringConstant, stringConstant))
+    }
+
+    private fun comment() {
+        tokens.addLast(LexerToken(TokenType.CommentSign))
+        var comment = ""
+        while (iterator.first() != '\n') {
+            currentChar = iterator.removeFirst()
+            comment += currentChar
+            columnNumber++
+        }
+        tokens.addLast(LexerToken(TokenType.Comment, comment))
     }
 
     private fun operator() {
