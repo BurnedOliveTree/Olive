@@ -209,6 +209,8 @@ class Lexer(sourceCode: String) {
             columnNumber++
             // TODO add escaping
         }
+        currentChar = iterator.removeFirst()
+        columnNumber++
         tokens.addLast(LexerToken(TokenType.StringConstant, stringConstant))
     }
 
