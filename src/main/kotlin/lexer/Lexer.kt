@@ -126,12 +126,37 @@ class Lexer(sourceCode: String) {
             'S' -> identifier = matchKeyword(TokenType.StringType,"S", "tring")
             'U' -> identifier = matchKeyword(TokenType.UnitType,"U", "nit")
             'a' -> { // and, as
-                TODO()
+                if (iterator.first().isLetter()) {
+                    currentChar = iterator.removeFirst()
+                    identifier += currentChar
+                    columnNumber++
+                    when (currentChar) {
+                        'n' -> identifier = matchKeyword(TokenType.AndOp, "an", "d")
+                        's' -> {
+                            tokens.addLast(LexerToken(TokenType.CastOp))
+                            identifier = null
+                        }
+                    }
+                }
             }
             'e' -> identifier = matchKeyword(TokenType.Else,"e", "lse")
             'f' -> identifier = matchKeyword(TokenType.BoolConstant,"f", "alse", false)
-            'i' -> { // if, is
-                TODO()
+            'i' -> {
+                if (iterator.first().isLetter()) {
+                    currentChar = iterator.removeFirst()
+                    identifier += currentChar
+                    columnNumber++
+                    when (currentChar) {
+                        'f' -> {
+                            tokens.addLast(LexerToken(TokenType.If))
+                            identifier = null
+                        }
+                        's' -> {
+                            tokens.addLast(LexerToken(TokenType.IsOp))
+                            identifier = null
+                        }
+                    }
+                }
             }
             'n' -> identifier = matchKeyword(TokenType.NotOp,"n", "ot")
             'o' -> identifier = matchKeyword(TokenType.OrOp,"o", "r")
