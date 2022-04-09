@@ -116,7 +116,7 @@ class Lexer(sourceCode: String) {
                 newIdentifier += currentChar
                 columnNumber++
             }
-            return if (keywordIterator.hasNext() || iterator.first().isLetter()) {
+            return if (keywordIterator.hasNext() || (iterator.firstOrNull()?.isLetter() == true)) {
                 newIdentifier
             } else {
                 tokens.addLast(LexerToken(tokenType, value))
