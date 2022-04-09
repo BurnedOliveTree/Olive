@@ -113,8 +113,8 @@ Inline comments
 Complex example
 ```
 isPerfectNumber(number: Int): Bool {
-    count: Int = 0;
-    iterator: Int = 1;
+    var count: Int = 0;
+    var iterator: Int = 1;
     while (iterator < number) {
         if (number % iterator == 0) {
             count += iterator;

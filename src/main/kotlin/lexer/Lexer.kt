@@ -109,13 +109,15 @@ class Lexer(sourceCode: String) {
 
     private fun keywordOrIdentifier() {
         fun matchKeyword(tokenType: TokenType, identifier: String, keyword: String, value: Any? = null): String? {
+            var newIdentifier = identifier
             val keywordIterator = keyword.asSequence().iterator()
             while (keywordIterator.hasNext() && iterator.first() == keywordIterator.next()) {
                 currentChar = iterator.removeFirst()
+                newIdentifier += currentChar
                 columnNumber++
             }
-            return if (keywordIterator.hasNext()) {
-                identifier + keywordIterator
+            return if (keywordIterator.hasNext() || iterator.first().isLetter()) {
+                newIdentifier
             } else {
                 tokens.addLast(LexerToken(tokenType, value))
                 null
@@ -138,8 +140,10 @@ class Lexer(sourceCode: String) {
                     when (currentChar) {
                         'n' -> identifier = matchKeyword(TokenType.AndOp, "an", "d")
                         's' -> {
-                            tokens.addLast(LexerToken(TokenType.CastOp))
-                            identifier = null
+                            if (!iterator.first().isLetter()) {
+                                tokens.addLast(LexerToken(TokenType.CastOp))
+                                identifier = null
+                            }
                         }
                     }
                 }
@@ -153,12 +157,16 @@ class Lexer(sourceCode: String) {
                     columnNumber++
                     when (currentChar) {
                         'f' -> {
-                            tokens.addLast(LexerToken(TokenType.If))
-                            identifier = null
+                            if (!iterator.first().isLetter()) {
+                                tokens.addLast(LexerToken(TokenType.If))
+                                identifier = null
+                            }
                         }
                         's' -> {
-                            tokens.addLast(LexerToken(TokenType.IsOp))
-                            identifier = null
+                            if (!iterator.first().isLetter()) {
+                                tokens.addLast(LexerToken(TokenType.IsOp))
+                                identifier = null
+                            }
                         }
                     }
                 }
@@ -171,7 +179,6 @@ class Lexer(sourceCode: String) {
             'w' -> identifier = matchKeyword(TokenType.While,"w", "hile")
         }
         if (identifier != null) {
-            // TODO fix this being too greedy, will probably need to change the logic with whitespaces
             while (iterator.first().isLetter() || iterator.first() == '_') {
                 currentChar = iterator.removeFirst()
                 identifier += currentChar
