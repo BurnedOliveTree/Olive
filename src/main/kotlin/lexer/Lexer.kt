@@ -56,10 +56,7 @@ enum class TokenType {
     Return,
 
     Identifier,
-    Constant,
-    AssignOp,
-    Comment,
-    WhiteSpace;
+    Comment;
 
     fun isConstant(): Boolean =
         this in listOf(BoolConstant, NumConstant, StringConstant)
@@ -71,7 +68,7 @@ enum class TokenType {
         this in listOf(NormalAssignOp, ReferenceAssignOp, SumAssignOp, DifferenceAssignOp, MultiplicationAssignOp, ExponentAssignOp, DivisionAssignOp, RootAssignOp, ModuloAssignOp)
 }
 
-data class LexerToken(val type: TokenType, val value: Any?)
+data class LexerToken(val type: TokenType, val value: Any? = null)
 
 class Lexer(sourceCode: String) {
     private val tokens: ArrayDeque<LexerToken> = ArrayDeque()
@@ -95,7 +92,7 @@ class Lexer(sourceCode: String) {
                 else -> {
                     columnNumber++
                     when {
-                        currentChar.isLetter() -> keywordOrIdentifier()
+                        currentChar.isLetter() || currentChar == '_' -> keywordOrIdentifier()
                         currentChar.isDigit() -> numericConstant()
                         currentChar == '"' -> stringConstant()
                         else -> operator()
@@ -106,7 +103,52 @@ class Lexer(sourceCode: String) {
     }
 
     private fun keywordOrIdentifier() {
-        TODO()
+        fun matchKeyword(tokenType: TokenType, identifier: String, keyword: String, value: Any? = null): String? {
+            val keywordIterator = keyword.asSequence().iterator()
+            while (keywordIterator.hasNext() && iterator.first() == keywordIterator.next()) {
+                currentChar = iterator.removeFirst()
+                columnNumber++
+            }
+            return if (keywordIterator.hasNext()) {
+                identifier + keywordIterator
+            } else {
+                tokens.addLast(LexerToken(tokenType, value))
+                null
+            }
+        }
+
+        var identifier: String? = currentChar.toString()
+        when (currentChar) {
+            'B' -> identifier = matchKeyword(TokenType.BoolType,"B", "ool")
+            'F' -> identifier = matchKeyword(TokenType.FloatType,"F", "loat")
+            'I' -> identifier = matchKeyword(TokenType.IntType,"I", "nt")
+            'N' -> identifier = matchKeyword(TokenType.NumberType,"N", "umber")
+            'S' -> identifier = matchKeyword(TokenType.StringType,"S", "tring")
+            'U' -> identifier = matchKeyword(TokenType.UnitType,"U", "nit")
+            'a' -> { // and, as
+                TODO()
+            }
+            'e' -> identifier = matchKeyword(TokenType.Else,"e", "lse")
+            'f' -> identifier = matchKeyword(TokenType.BoolConstant,"f", "alse", false)
+            'i' -> { // if, is
+                TODO()
+            }
+            'n' -> identifier = matchKeyword(TokenType.NotOp,"n", "ot")
+            'o' -> identifier = matchKeyword(TokenType.OrOp,"o", "r")
+            'r' -> identifier = matchKeyword(TokenType.Return,"r", "eturn")
+            't' -> identifier = matchKeyword(TokenType.BoolConstant,"t", "rue", true)
+            'v' -> identifier = matchKeyword(TokenType.Variable,"v", "ar")
+            'w' -> identifier = matchKeyword(TokenType.While,"w", "hile")
+        }
+        if (identifier != null) {
+            // TODO fix this being too greedy, will probably need to change the logic with whitespaces
+            while (iterator.first().isLetter() || iterator.first() == '_') {
+                currentChar = iterator.removeFirst()
+                identifier += currentChar
+                columnNumber++
+            }
+            tokens.addLast(LexerToken(TokenType.Identifier, identifier))
+        }
     }
 
     private fun numericConstant() {
@@ -143,9 +185,9 @@ class Lexer(sourceCode: String) {
             if (iterator.first() == '=') {
                 currentChar = iterator.removeFirst()
                 columnNumber++
-                tokens.addLast(LexerToken(assignTokenType, null))
+                tokens.addLast(LexerToken(assignTokenType))
             } else
-                tokens.addLast(LexerToken(normalTokenType, null))
+                tokens.addLast(LexerToken(normalTokenType))
         }
 
         when (currentChar) {
@@ -160,10 +202,10 @@ class Lexer(sourceCode: String) {
             '>' -> assignOperator(TokenType.GreaterThanOp, TokenType.GreaterOrEqualOp)
             '=' -> assignOperator(TokenType.NormalAssignOp, TokenType.NormalComparisonOp)
             '&' -> TODO()
-            ':' -> tokens.addLast(LexerToken(TokenType.TypeSign, null))
-            ';' -> tokens.addLast(LexerToken(TokenType.EndSign, null))
-            ',' -> tokens.addLast(LexerToken(TokenType.EnumerationSign, null))
-            '.' -> tokens.addLast(LexerToken(TokenType.MemberReferenceSign, null))
+            ':' -> tokens.addLast(LexerToken(TokenType.TypeSign))
+            ';' -> tokens.addLast(LexerToken(TokenType.EndSign))
+            ',' -> tokens.addLast(LexerToken(TokenType.EnumerationSign))
+            '.' -> tokens.addLast(LexerToken(TokenType.MemberReferenceSign))
             else -> throw LexisError(currentChar, lineNumber, columnNumber)
         }
     }
