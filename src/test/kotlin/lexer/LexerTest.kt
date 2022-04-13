@@ -46,4 +46,43 @@ class LexerTest: FunSpec({
             shouldThrowExactly<LexisError> { Lexer(code).peek() }
         }
     }
+    test("UnitType test") {
+        Lexer("Unit").peek() shouldBe LexerToken(TokenType.UnitType)
+    }
+    test("IntegerType test") {
+        Lexer("Int").peek() shouldBe LexerToken(TokenType.IntType)
+    }
+    test("FloatType test") {
+        Lexer("Float").peek() shouldBe LexerToken(TokenType.FloatType)
+    }
+    test("NumberType test") {
+        Lexer("Number").peek() shouldBe LexerToken(TokenType.NumberType)
+    }
+    test("StringType test") {
+        Lexer("String").peek() shouldBe LexerToken(TokenType.StringType)
+    }
+    test("BooleanType test") {
+        Lexer("Bool").peek() shouldBe LexerToken(TokenType.BoolType)
+    }
+    test("SumOperator test") {
+        Lexer("+").peek() shouldBe LexerToken(TokenType.SumOp)
+    }
+    test("DifferenceOperator test") {
+        Lexer("-").peek() shouldBe LexerToken(TokenType.DifferenceOp)
+    }
+    test("MultiplicationOperator test") {
+        Lexer("*").peek() shouldBe LexerToken(TokenType.MultiplicationOp)
+    }
+    test("ExponentOperator test") {
+        Lexer("^").peek() shouldBe LexerToken(TokenType.ExponentOp)
+    }
+    test("DivisionOperator test") {
+        Lexer("/").peek() shouldBe LexerToken(TokenType.DivisionOp)
+    }
+    test("RootOperator test") {
+        Lexer("|").peek() shouldBe LexerToken(TokenType.RootOp)
+    }
+    test("ModuloOperator test") {
+        Lexer("%").peek() shouldBe LexerToken(TokenType.ModuloOp)
+    }
 })

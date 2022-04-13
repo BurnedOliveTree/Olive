@@ -239,7 +239,7 @@ class Lexer(sourceCode: String) {
 
     private fun operator() {
         fun assignOperator(normalTokenType: TokenType, assignTokenType: TokenType) {
-            if (iterator.first() == '=') {
+            if (iterator.firstOrNull() == '=') {
                 currentChar = iterator.removeFirst()
                 columnNumber++
                 tokens.addLast(LexerToken(assignTokenType))
