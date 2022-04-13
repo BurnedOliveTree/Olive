@@ -140,7 +140,7 @@ class Lexer(sourceCode: String) {
                     when (currentChar) {
                         'n' -> identifier = matchKeyword(TokenType.AndOp, "an", "d")
                         's' -> {
-                            if (!iterator.first().isLetter()) {
+                            if (iterator.firstOrNull()?.isLetter() != true) {
                                 tokens.addLast(LexerToken(TokenType.CastOp))
                                 identifier = null
                             }
@@ -157,13 +157,13 @@ class Lexer(sourceCode: String) {
                     columnNumber++
                     when (currentChar) {
                         'f' -> {
-                            if (!iterator.first().isLetter()) {
+                            if (iterator.firstOrNull()?.isLetter() != true) {
                                 tokens.addLast(LexerToken(TokenType.If))
                                 identifier = null
                             }
                         }
                         's' -> {
-                            if (!iterator.first().isLetter()) {
+                            if (iterator.firstOrNull()?.isLetter() != true) {
                                 tokens.addLast(LexerToken(TokenType.IsOp))
                                 identifier = null
                             }
@@ -179,7 +179,7 @@ class Lexer(sourceCode: String) {
             'w' -> identifier = matchKeyword(TokenType.While,"w", "hile")
         }
         if (identifier != null) {
-            while (iterator.first().isLetter() || iterator.first() == '_') {
+            while (iterator.firstOrNull()?.isLetter() == true || iterator.firstOrNull() == '_') {
                 currentChar = iterator.removeFirst()
                 identifier += currentChar
                 columnNumber++
@@ -229,7 +229,7 @@ class Lexer(sourceCode: String) {
     private fun comment() {
         tokens.addLast(LexerToken(TokenType.CommentSign))
         var comment = ""
-        while (iterator.first() != '\n') {
+        while (iterator.firstOrNull()?.equals('\n') == false) {
             currentChar = iterator.removeFirst()
             comment += currentChar
             columnNumber++

@@ -85,4 +85,115 @@ class LexerTest: FunSpec({
     test("ModuloOperator test") {
         Lexer("%").peek() shouldBe LexerToken(TokenType.ModuloOp)
     }
+    test("NotOperator test") {
+        Lexer("not").peek() shouldBe LexerToken(TokenType.NotOp)
+    }
+    test("AndOperator test") {
+        Lexer("and").peek() shouldBe LexerToken(TokenType.AndOp)
+    }
+    test("OrOperator test") {
+        Lexer("or").peek() shouldBe LexerToken(TokenType.OrOp)
+    }
+    test("IsOperator test") {
+        Lexer("is").peek() shouldBe LexerToken(TokenType.IsOp)
+    }
+    test("CastOperator test") {
+        Lexer("as").peek() shouldBe LexerToken(TokenType.CastOp)
+    }
+    test("NormalAssignmentOperator test") {
+        Lexer("=").peek() shouldBe LexerToken(TokenType.NormalAssignOp)
+    }
+    test("ReferenceAssignmentOperator test") {
+        Lexer("&=").peek() shouldBe LexerToken(TokenType.ReferenceAssignOp)
+    }
+    test("SumAssignmentOperator test") {
+        Lexer("+=").peek() shouldBe LexerToken(TokenType.SumAssignOp)
+    }
+    test("DifferenceAssignmentOperator test") {
+        Lexer("-=").peek() shouldBe LexerToken(TokenType.DifferenceAssignOp)
+    }
+    test("MultiplicationAssignmentOperator test") {
+        Lexer("*=").peek() shouldBe LexerToken(TokenType.MultiplicationAssignOp)
+    }
+    test("ExponentAssignmentOperator test") {
+        Lexer("^=").peek() shouldBe LexerToken(TokenType.ExponentAssignOp)
+    }
+    test("DivisionAssignmentOperator test") {
+        Lexer("/=").peek() shouldBe LexerToken(TokenType.DivisionAssignOp)
+    }
+    test("RootAssignmentOperator test") {
+        Lexer("|=").peek() shouldBe LexerToken(TokenType.RootAssignOp)
+    }
+    test("ModuloAssignmentOperator test") {
+        Lexer("%=").peek() shouldBe LexerToken(TokenType.ModuloAssignOp)
+    }
+    test("NormalComparisonOperator test") {
+        Lexer("==").peek() shouldBe LexerToken(TokenType.NormalComparisonOp)
+    }
+    test("ReferenceComparisonOperator test") {
+        Lexer("&==").peek() shouldBe LexerToken(TokenType.ReferenceComparisonOp)
+    }
+    test("LesserThanOperator test") {
+        Lexer("<").peek() shouldBe LexerToken(TokenType.LesserThanOp)
+    }
+    test("LesserOrEqualThanOperator test") {
+        Lexer("<=").peek() shouldBe LexerToken(TokenType.LesserOrEqualOp)
+    }
+    test("GreaterThanOperator test") {
+        Lexer(">").peek() shouldBe LexerToken(TokenType.GreaterThanOp)
+    }
+    test("TypeSign test") {
+        Lexer(":").peek() shouldBe LexerToken(TokenType.TypeSign)
+    }
+    test("CommentSign test") {
+        Lexer("#").peek() shouldBe LexerToken(TokenType.CommentSign)
+    }
+    test("EndOfLineSign test") {
+        Lexer(";").peek() shouldBe LexerToken(TokenType.EndSign)
+    }
+    test("ArgumentEnumerationSign test") {
+        Lexer(",").peek() shouldBe LexerToken(TokenType.EnumerationSign)
+    }
+    test("MemberReferenceSign test") {
+        Lexer(".").peek() shouldBe LexerToken(TokenType.MemberReferenceSign)
+    }
+    test("VariableKeyword test") {
+        Lexer("var").peek() shouldBe LexerToken(TokenType.Variable)
+    }
+    test("IfKeyword test") {
+        Lexer("if").peek() shouldBe LexerToken(TokenType.If)
+    }
+    test("ElseKeyword test") {
+        Lexer("else").peek() shouldBe LexerToken(TokenType.Else)
+    }
+    test("WhileKeyword test") {
+        Lexer("while").peek() shouldBe LexerToken(TokenType.While)
+    }
+    test("ReturnKeyword test") {
+        Lexer("return").peek() shouldBe LexerToken(TokenType.Return)
+    }
+    context("Identifier tests") {
+        withData(
+            nameFn = { it.first },
+            "identifier" to LexerToken(TokenType.Identifier, "identifier"),
+            "isEmpty" to LexerToken(TokenType.Identifier, "isEmpty"),
+            "andorvar" to LexerToken(TokenType.Identifier, "andorvar"),
+            "ąęćśóżž" to LexerToken(TokenType.Identifier, "ąęćśóżž"),
+            "_龙龍" to LexerToken(TokenType.Identifier, "_龙龍"),
+        ) { (code, token) ->
+            Lexer(code).peek() shouldBe token
+        }
+    }
+    context("Comment tests") {
+        withData(
+            nameFn = { it.first },
+            "# " to LexerToken(TokenType.Comment, " "),
+            "# \"" to LexerToken(TokenType.Comment, " \""),
+            "# some comment \n" to LexerToken(TokenType.Comment, " some comment "),
+            "# var x: Int\nvar x: Int" to LexerToken(TokenType.Comment, " var x: Int")
+        ) { (code, token) ->
+            Lexer(code).let { it.next(); it.peek() } shouldBe token
+        }
+    }
+    // TODO add unhappy path tests
 })
