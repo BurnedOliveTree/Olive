@@ -201,7 +201,7 @@ class Lexer(sourceCode: String) {
             currentChar = iterator.removeFirst()
             number += currentChar
             columnNumber++
-            if (!iterator.first().isDigit())
+            if (iterator.firstOrNull()?.isDigit() != true)
                 throw LexisError(currentChar, lineNumber, columnNumber)
             while (iterator.firstOrNull()?.isDigit() == true) {
                 currentChar = iterator.removeFirst()

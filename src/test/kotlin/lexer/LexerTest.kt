@@ -1,59 +1,49 @@
 package lexer
 
-import org.junit.jupiter.api.DynamicTest.dynamicTest
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import kotlin.test.assertEquals
+import io.kotest.assertions.throwables.shouldThrowExactly
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.datatest.withData
+import io.kotest.matchers.shouldBe
 
-class LexerTest {
-    private fun createValuedTestData(tokenType: TokenType, data: List<Pair<String, Any?>>): List<Pair<String, LexerToken>> {
-        return data.map { it.first to LexerToken(tokenType, it.second) }
-    }
-
-    private fun createTestData(tokenType: TokenType, data: List<String>): List<Pair<String, LexerToken>> {
-        return data.map { it to LexerToken(tokenType, null) }
-    }
-
-    @Test
-    fun stringConstantTest() {
+class LexerTest: FunSpec({
+    context("StringConstant tests") {
         // TODO add strings with escaping
-        createValuedTestData(TokenType.StringConstant,
-            listOf("\"test\"" to "test", "\"ąęćśóżź\"" to "ąęćśóżź", "\"龙,龍\"" to "龙,龍")
-        ).map { (code, token) ->
-            dynamicTest("\"$code\" should create this token: $token") {
-                assertEquals(token, Lexer(code).peek())
-            }
+        withData(
+            nameFn = { it.first },
+            "\"test\"" to LexerToken(TokenType.StringConstant, "test"),
+            "\"ąęćśóżź\"" to LexerToken(TokenType.StringConstant, "ąęćśóżź"),
+            "\"龙,龍\"" to LexerToken(TokenType.StringConstant, "龙,龍")
+        ) { (code, token) ->
+            Lexer(code).peek() shouldBe token
         }
     }
-
-    @Test
-    fun numericConstantTest() {
-        createValuedTestData(TokenType.NumConstant,
-            listOf("0" to 0, "0.365" to 0.365, "1462" to 1462, "45.23" to 45.23)
-        ).map { (code, token) ->
-            dynamicTest("\"$code\" should create this token: $token") {
-                assertEquals(token, Lexer(code).peek())
-            }
+    context("NumericConstant tests") {
+        withData(
+            nameFn = { it.first },
+            "0" to LexerToken(TokenType.NumConstant, 0),
+            "0.365" to LexerToken(TokenType.NumConstant, 0.365),
+            "1462" to LexerToken(TokenType.NumConstant, 1462),
+            "45.23" to LexerToken(TokenType.NumConstant, 45.23)
+        ) { (code, token) ->
+            Lexer(code).peek() shouldBe token
         }
     }
-
-    @Test
-    fun booleanConstantTest() {
-        createValuedTestData(TokenType.BoolConstant,
-            listOf("true" to true, "false" to false)
-        ).map { (code, token) ->
-            dynamicTest("\"$code\" should create this token: $token") {
-                assertEquals(token, Lexer(code).peek())
-            }
+    context("BooleanConstant tests") {
+        withData(
+            nameFn = { it.first },
+            "true" to LexerToken(TokenType.BoolConstant, true),
+            "false" to LexerToken(TokenType.BoolConstant, false)
+        ) { (code, token) ->
+            Lexer(code).peek() shouldBe token
         }
     }
-
-    @Test
-    fun improperNumericConstantTest() {
-        listOf("000", "0123.456", ".123", "123.").map { code ->
-            dynamicTest("\"$code\" should throw LexisError") {
-                assertThrows<LexisError> { Lexer(code).peek() }
-            }
+    context("invalid NumericConstant tests") {
+        withData(
+            nameFn = { it },
+            "123.",
+            "0."
+        ) { code ->
+            shouldThrowExactly<LexisError> { Lexer(code).peek() }
         }
     }
-}
+})
