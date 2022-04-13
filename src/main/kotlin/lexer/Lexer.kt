@@ -191,19 +191,19 @@ class Lexer(sourceCode: String) {
     private fun numericConstant() {
         var number: String = currentChar.toString()
         if (currentChar != '0') {
-            while (iterator.first().isDigit()) {
+            while (iterator.firstOrNull()?.isDigit() == true) {
                 currentChar = iterator.removeFirst()
                 number += currentChar
                 columnNumber++
             }
         }
-        if (iterator.first() == '.') {
+        if (iterator.firstOrNull() == '.') {
             currentChar = iterator.removeFirst()
             number += currentChar
             columnNumber++
             if (!iterator.first().isDigit())
                 throw LexisError(currentChar, lineNumber, columnNumber)
-            while (iterator.first().isDigit()) {
+            while (iterator.firstOrNull()?.isDigit() == true) {
                 currentChar = iterator.removeFirst()
                 number += currentChar
                 columnNumber++
