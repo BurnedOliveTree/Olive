@@ -7,12 +7,13 @@ import io.kotest.matchers.shouldBe
 
 class LexerTest: FunSpec({
     context("StringConstant tests") {
-        // TODO add strings with escaping
         withData(
             nameFn = { it.first },
             "\"test\"" to LexerToken(TokenType.StringConstant, "test"),
             "\"ąęćśóżź\"" to LexerToken(TokenType.StringConstant, "ąęćśóżź"),
-            "\"龙,龍\"" to LexerToken(TokenType.StringConstant, "龙,龍")
+            "\"龙,龍\"" to LexerToken(TokenType.StringConstant, "龙,龍"),
+            "\"\\\"\"" to LexerToken(TokenType.StringConstant, "\""),
+            "\"\\\\\"" to LexerToken(TokenType.StringConstant, "\\")
         ) { (code, token) ->
             Lexer(code).peek() shouldBe token
         }

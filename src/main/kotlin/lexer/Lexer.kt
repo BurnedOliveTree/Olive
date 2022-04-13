@@ -217,9 +217,14 @@ class Lexer(sourceCode: String) {
         var stringConstant = ""
         while (iterator.first() != '"') {
             currentChar = iterator.removeFirst()
+            if (currentChar == '\\') {
+                if (iterator.isEmpty())
+                    throw LexisError(currentChar, lineNumber, columnNumber)
+                currentChar = iterator.removeFirst()
+                columnNumber++
+            }
             stringConstant += currentChar
             columnNumber++
-            // TODO add escaping
         }
         currentChar = iterator.removeFirst()
         columnNumber++
