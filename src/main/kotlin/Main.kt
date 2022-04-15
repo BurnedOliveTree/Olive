@@ -6,7 +6,6 @@ fun parseFile(filename: String): String {
 }
 
 fun main(args: Array<String>) {
-    // TODO add handling of direct source code
     if (args.isEmpty())
         throw IllegalArgumentException("File name must be specified!")
 
