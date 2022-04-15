@@ -1,0 +1,16 @@
+isPerfectNumber(number: Int): Bool {
+    var count: Int = 0;
+    var iterator: Int = 1;
+    while (iterator < number) {
+        if (number % iterator == 0) {
+            count += iterator;
+        }
+        iterator += 1;
+    }
+    return count == number;
+}
+
+main(): Unit {
+    var number: Float = 6.5;
+    isPerfectNumber(number as Int);
+}

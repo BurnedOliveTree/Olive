@@ -5,7 +5,6 @@ plugins {
     application
 }
 
-group = "edu.burnedolivetree"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -19,6 +18,10 @@ dependencies {
     testImplementation("io.kotest:kotest-framework-datatest:$kotestVersion")
 }
 
+application {
+    mainClass.set("MainKt")
+}
+
 tasks.test {
     useJUnitPlatform()
 }
@@ -27,6 +30,12 @@ tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "11"
 }
 
-application {
-    mainClass.set("MainKt")
+tasks.withType<Jar> {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    manifest {
+        attributes["Main-Class"] = application.mainClass.get()
+    }
+    configurations["compileClasspath"].forEach {
+        from(zipTree(it.absoluteFile))
+    }
 }

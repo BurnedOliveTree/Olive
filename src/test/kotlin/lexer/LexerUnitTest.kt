@@ -5,7 +5,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 
-class LexerTest: FunSpec({
+class LexerUnitTest: FunSpec({
     context("StringConstant tests") {
         withData(
             nameFn = { it.first },
