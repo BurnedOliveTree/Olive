@@ -18,6 +18,15 @@ class LexerTest: FunSpec({
             Lexer(code).peek() shouldBe token
         }
     }
+    context("invalid StringConstant tests") {
+        withData(
+            nameFn = { it },
+            "\"",
+            "\"invalid"
+        ) { code ->
+            shouldThrowExactly<LexisError> { Lexer(code).peek() }
+        }
+    }
     context("NumericConstant tests") {
         withData(
             nameFn = { it.first },
@@ -177,6 +186,8 @@ class LexerTest: FunSpec({
         withData(
             nameFn = { it.first },
             "identifier" to LexerToken(TokenType.Identifier, "identifier"),
+            "f" to LexerToken(TokenType.Identifier, "f"),
+            "fals" to LexerToken(TokenType.Identifier, "fals"),
             "isEmpty" to LexerToken(TokenType.Identifier, "isEmpty"),
             "andorvar" to LexerToken(TokenType.Identifier, "andorvar"),
             "ąęćśóżž" to LexerToken(TokenType.Identifier, "ąęćśóżž"),
@@ -196,5 +207,14 @@ class LexerTest: FunSpec({
             Lexer(code).let { it.next(); it.peek() } shouldBe token
         }
     }
-    // TODO add unhappy path tests
+    context("invalid signs tests") {
+        withData(
+            nameFn = { it },
+            "@",
+            "$",
+            "'"
+        ) { code ->
+            shouldThrowExactly<LexisError> { Lexer(code).peek() }
+        }
+    }
 })

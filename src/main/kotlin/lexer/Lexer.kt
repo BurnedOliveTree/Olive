@@ -1,5 +1,11 @@
 package lexer
 
+internal fun String.toQueue(): ArrayDeque<Char> {
+    val queue = ArrayDeque<Char>()
+    this.forEach { queue.addLast(it) }
+    return queue
+}
+
 enum class TokenType {
     StringConstant,
     NumConstant,
@@ -77,13 +83,12 @@ data class LexerToken(val type: TokenType, val value: Any? = null)
 
 class Lexer(sourceCode: String) {
     private val tokens: ArrayDeque<LexerToken> = ArrayDeque()
-    private val iterator: ArrayDeque<Char> = ArrayDeque()
+    private val iterator: ArrayDeque<Char> = sourceCode.toQueue()
     private var currentChar: Char = '\n'
     private var lineNumber = 0
     private var columnNumber = 0
 
     init {
-        sourceCode.forEach { iterator.addLast(it) }
         while (!iterator.isEmpty()) {
             currentChar = iterator.removeFirst()
             when (currentChar) {
@@ -110,13 +115,14 @@ class Lexer(sourceCode: String) {
     private fun keywordOrIdentifier() {
         fun matchKeyword(tokenType: TokenType, identifier: String, keyword: String, value: Any? = null): String? {
             var newIdentifier = identifier
-            val keywordIterator = keyword.asSequence().iterator()
-            while (keywordIterator.hasNext() && iterator.first() == keywordIterator.next()) {
+            val keywordIterator = keyword.toQueue()
+            while (!keywordIterator.isEmpty() && iterator.firstOrNull() == keywordIterator.first()) {
+                keywordIterator.removeFirst()
                 currentChar = iterator.removeFirst()
                 newIdentifier += currentChar
                 columnNumber++
             }
-            return if (keywordIterator.hasNext() || (iterator.firstOrNull()?.isLetter() == true)) {
+            return if (!keywordIterator.isEmpty() || (iterator.firstOrNull()?.isLetter() == true)) {
                 newIdentifier
             } else {
                 tokens.addLast(LexerToken(tokenType, value))
@@ -215,7 +221,7 @@ class Lexer(sourceCode: String) {
 
     private fun stringConstant() {
         var stringConstant = ""
-        while (iterator.first() != '"') {
+        while ((iterator.firstOrNull() ?: '"') != '"') {
             currentChar = iterator.removeFirst()
             if (currentChar == '\\') {
                 if (iterator.isEmpty())
@@ -226,7 +232,7 @@ class Lexer(sourceCode: String) {
             stringConstant += currentChar
             columnNumber++
         }
-        currentChar = iterator.removeFirst()
+        currentChar = iterator.removeFirstOrNull().let { it ?: throw LexisError(currentChar, lineNumber, columnNumber) }
         columnNumber++
         tokens.addLast(LexerToken(TokenType.StringConstant, stringConstant))
     }
