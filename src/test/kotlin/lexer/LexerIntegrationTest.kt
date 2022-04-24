@@ -87,6 +87,7 @@ class LexerIntegrationTest: FunSpec({
         )
         val lexer = Lexer(sourceCode)
         tokens.forEach {
+            lexer.hasNext() shouldBe true
             lexer.peek() shouldBe it
             lexer.next()
         }

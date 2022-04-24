@@ -88,15 +88,24 @@ class Lexer(sourceCode: String) {
     private var lineNumber = 0
     private var columnNumber = 0
 
-    init {
-        while (!iterator.isEmpty()) {
+    private fun parseNextToken() {
+        var shouldRepeat = true
+        while (shouldRepeat && !iterator.isEmpty()) {
+            shouldRepeat = false
             currentChar = iterator.removeFirst()
             when (currentChar) {
-                ' ' -> columnNumber++
-                '\t' -> columnNumber += 4
+                ' ' -> {
+                    columnNumber++
+                    shouldRepeat = true
+                }
+                '\t' -> {
+                    columnNumber += 4
+                    shouldRepeat = true
+                }
                 '\n' -> {
                     lineNumber++
                     columnNumber = 0
+                    shouldRepeat = true
                 }
                 else -> {
                     columnNumber++
@@ -291,14 +300,20 @@ class Lexer(sourceCode: String) {
     }
 
     fun next(): Boolean {
+        if (tokens.isEmpty())
+            parseNextToken()
         return tokens.removeFirstOrNull() != null
     }
 
     fun peek(): LexerToken {
+        if (tokens.isEmpty())
+            parseNextToken()
         return tokens.first()
     }
 
     fun hasNext(): Boolean {
+        if (tokens.isEmpty())
+            parseNextToken()
         return tokens.firstOrNull() != null
     }
 }
