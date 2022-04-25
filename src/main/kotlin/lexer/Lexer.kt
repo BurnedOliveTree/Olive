@@ -101,7 +101,7 @@ internal class CodeIterator(sourceCode: String, private val tabSize: Int) {
             '\t' -> columnNumber += tabSize
             '\n', '\r' -> {
                 lineNumber++
-                columnNumber = 1
+                columnNumber = 0
             }
             else -> columnNumber++
         }

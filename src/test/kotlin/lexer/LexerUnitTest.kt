@@ -6,7 +6,17 @@ import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 
 class LexerUnitTest: FunSpec({
-    // TODO whitespace and positions tests
+    context("Whitespace tests") {
+        withData(
+            nameFn = { "Sign \"$it\"" },
+            " ",
+            "\t",
+            "\n",
+            "\r"
+        ) { code ->
+            Lexer(code).isEmpty()
+        }
+    }
     context("StringConstant tests") {
         withData(
             nameFn = { it.first },
@@ -214,6 +224,18 @@ class LexerUnitTest: FunSpec({
             "'"
         ) { code ->
             shouldThrowExactly<UnrecognizedSignError> { Lexer(code).next() }
+        }
+    }
+    context("sourceCode line and column tests") {
+        withData(
+            nameFn = { it.first },
+            "\"" to (1 to 1),
+            " \"" to (1 to 2),
+            "\t\"" to (1 to 5),
+            "\n\"" to (2 to 1),
+            "\n  \"" to (2 to 3),
+        ) { (code, place) ->
+            try { Lexer(code).next() } catch (e: MissingSignError) { e.message shouldBe "expected a \" after token: \" found at ${place.first}:${place.second}" }
         }
     }
 })
