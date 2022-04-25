@@ -1,12 +1,5 @@
 package lexer
 
-// TODO lazy
-internal fun String.toQueue(): ArrayDeque<Char> {
-    val queue = ArrayDeque<Char>()
-    this.forEach { queue.addLast(it) }
-    return queue
-}
-
 enum class TokenType {
     StringConstant,
     NumConstant,
@@ -83,19 +76,27 @@ enum class TokenType {
 data class LexerToken(val type: TokenType, val value: Any? = null)
 
 internal class CodeIterator(sourceCode: String, private val tabSize: Int) {
-    private val iterator = sourceCode.toQueue()
+    private val iterator = sourceCode.iterator()
     var lineNumber = 1
     var columnNumber = 0
     private var currentChar: Char = '§'
+    private var nextChar: Char? = null
 
-    fun isEmpty() = iterator.isEmpty()
+    fun isEmpty() = !iterator.hasNext() && nextChar == null
 
     fun current() = currentChar
 
-    fun peek(): Char? = iterator.firstOrNull()
+    fun peek(): Char? {
+        if (nextChar == null && iterator.hasNext())
+            nextChar = iterator.nextChar()
+        return nextChar
+    }
 
     fun next(): Char {
-        currentChar = iterator.removeFirst()
+        if (nextChar == null)
+            nextChar = iterator.nextChar()
+        currentChar = nextChar!!
+        nextChar = null
         when (currentChar) {
             '\t' -> columnNumber += tabSize
             '\n', '\r' -> {
