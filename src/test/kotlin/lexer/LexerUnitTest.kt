@@ -213,7 +213,7 @@ class LexerUnitTest: FunSpec({
             "# some comment \n" to LexerToken(TokenType.Comment, " some comment "),
             "# var x: Int\nvar x: Int" to LexerToken(TokenType.Comment, " var x: Int")
         ) { (code, token) ->
-            Lexer(code).let { it.next() } shouldBe token
+            Lexer(code).next() shouldBe token
         }
     }
     context("invalid signs tests") {

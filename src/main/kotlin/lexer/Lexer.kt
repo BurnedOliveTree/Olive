@@ -1,5 +1,7 @@
 package lexer
 
+import kotlin.math.pow
+
 enum class TokenType {
     StringConstant,
     NumConstant,
@@ -203,22 +205,25 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
         if (!iterator.current().isDigit())
             return null
 
-        val number = StringBuilder().append(iterator.current())
+        var number = iterator.current() - '0'
         if (iterator.current() != '0') {
             while (iterator.peek()?.isDigit() == true) {
-                number.append(iterator.next())
+                number = number * 10 + (iterator.next() - '0')
             }
         }
         return if (iterator.peek() == '.') {
-            number.append(iterator.next())
+            var decimalPart = 0
+            var digitCounter = 0
+            iterator.next()
             if (iterator.peek()?.isDigit() != true)
                 throw MissingSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber, "number")
             while (iterator.peek()?.isDigit() == true) {
-                number.append(iterator.next())
+                decimalPart = decimalPart * 10 + (iterator.next() - '0')
+                digitCounter++
             }
-            LexerToken(TokenType.NumConstant, number.toString().toDouble())
+            LexerToken(TokenType.NumConstant, number + decimalPart / 10.0.pow(digitCounter))
         } else
-            LexerToken(TokenType.NumConstant, number.toString().toInt())
+            LexerToken(TokenType.NumConstant, number)
     }
 
     private fun stringConstant(): LexerToken? {
