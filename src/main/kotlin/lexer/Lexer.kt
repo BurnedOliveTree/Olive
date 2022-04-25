@@ -82,44 +82,55 @@ enum class TokenType {
 
 data class LexerToken(val type: TokenType, val value: Any? = null)
 
-class Lexer(sourceCode: String) {
-    private val tokens: ArrayDeque<LexerToken> = ArrayDeque()
-    private val iterator: ArrayDeque<Char> = sourceCode.toQueue() // TODO own iterator class with lineNumber and columnNumber
+internal class CodeIterator(sourceCode: String, private val tabSize: Int) {
+    private val iterator = sourceCode.toQueue()
+    var lineNumber = 0
+    var columnNumber = 0
     private var currentChar: Char = '\n'
-    private var lineNumber = 0
-    private var columnNumber = 0
 
-    private fun parseNextToken() {
-        var shouldRepeat = true
-        while (shouldRepeat && !iterator.isEmpty()) {
-            shouldRepeat = false
-            currentChar = iterator.removeFirst()
-            when (currentChar) {
-                // TODO isWhitespace()
-                ' ' -> {
-                    columnNumber++
-                    shouldRepeat = true
-                }
-                '\t' -> {
-                    columnNumber += 4
-                    shouldRepeat = true
-                }
-                '\n' -> {
-                    lineNumber++
-                    columnNumber = 0
-                    shouldRepeat = true
-                }
-                else -> {
-                    columnNumber++
-                    when { // TODO do not check first sign here
-                        currentChar.isLetter() || currentChar == '_' -> keywordOrIdentifier()
-                        currentChar.isDigit() -> numericConstant()
-                        currentChar == '"' -> stringConstant()
-                        currentChar == '#' -> comment()
-                        else -> operator()
-                    }
-                }
+    fun isEmpty() = iterator.isEmpty()
+
+    fun current() = currentChar
+
+    fun peek(): Char? = iterator.firstOrNull()
+
+    fun next(): Char {
+        val character = iterator.removeFirst()
+        when (character) {
+            '\t' -> columnNumber += tabSize
+            '\n', '\r' -> {
+                lineNumber++
+                columnNumber = 0
             }
+            else -> columnNumber++
+        }
+        return character
+    }
+}
+
+class Lexer(sourceCode: String, tabSize: Int = 4) {
+    private val tokens: ArrayDeque<LexerToken> = ArrayDeque()
+    private val iterator = CodeIterator(sourceCode, tabSize)
+
+    private fun parseNextToken(): Boolean {
+        if (!iterator.isEmpty()) {
+            iterator.next()
+            skipWhitespace()
+            when { // TODO do not check first sign here
+                iterator.current().isLetter() || iterator.current() == '_' -> keywordOrIdentifier()
+                iterator.current().isDigit() -> numericConstant()
+                iterator.current() == '"' -> stringConstant()
+                iterator.current() == '#' -> comment()
+                else -> operator()
+            }
+            return true
+        }
+        return false
+    }
+
+    private fun skipWhitespace() {
+        while (iterator.current().isWhitespace()) {
+            iterator.next()
         }
     }
 
@@ -127,13 +138,11 @@ class Lexer(sourceCode: String) {
         fun matchKeyword(tokenType: TokenType, identifier: String, keyword: String, value: Any? = null): String? {
             var newIdentifier = identifier
             val keywordIterator = keyword.toQueue()
-            while (!keywordIterator.isEmpty() && iterator.firstOrNull() == keywordIterator.first()) {
+            while (!keywordIterator.isEmpty() && iterator.peek() == keywordIterator.first()) {
                 keywordIterator.removeFirst()
-                currentChar = iterator.removeFirst()
-                newIdentifier += currentChar
-                columnNumber++
+                newIdentifier += iterator.next()
             }
-            return if (!keywordIterator.isEmpty() || (iterator.firstOrNull()?.isLetter() == true)) {
+            return if (!keywordIterator.isEmpty() || (iterator.peek()?.isLetter() == true)) {
                 newIdentifier
             } else {
                 tokens.addLast(LexerToken(tokenType, value))
@@ -141,8 +150,8 @@ class Lexer(sourceCode: String) {
             }
         }
 
-        var identifier: String? = currentChar.toString()
-        when (currentChar) {
+        var identifier: String? = iterator.current().toString()
+        when (iterator.current()) { // TODO dictionary instead of switch
             'B' -> identifier = matchKeyword(TokenType.BoolType,"B", "ool")
             'F' -> identifier = matchKeyword(TokenType.FloatType,"F", "loat")
             'I' -> identifier = matchKeyword(TokenType.IntType,"I", "nt")
@@ -150,14 +159,12 @@ class Lexer(sourceCode: String) {
             'S' -> identifier = matchKeyword(TokenType.StringType,"S", "tring")
             'U' -> identifier = matchKeyword(TokenType.UnitType,"U", "nit")
             'a' -> {
-                if (iterator.first().isLetter()) {
-                    currentChar = iterator.removeFirst()
-                    identifier += currentChar
-                    columnNumber++
-                    when (currentChar) {
+                if (iterator.peek()!!.isLetter()) {
+                    identifier += iterator.next()
+                    when (iterator.current()) {
                         'n' -> identifier = matchKeyword(TokenType.AndOp, "an", "d")
                         's' -> {
-                            if (iterator.firstOrNull()?.isLetter() != true) {
+                            if (iterator.peek()?.isLetter() != true) {
                                 tokens.addLast(LexerToken(TokenType.CastOp))
                                 identifier = null
                             }
@@ -168,19 +175,17 @@ class Lexer(sourceCode: String) {
             'e' -> identifier = matchKeyword(TokenType.Else,"e", "lse")
             'f' -> identifier = matchKeyword(TokenType.BoolConstant,"f", "alse", false)
             'i' -> {
-                if (iterator.first().isLetter()) {
-                    currentChar = iterator.removeFirst()
-                    identifier += currentChar
-                    columnNumber++
-                    when (currentChar) {
+                if (iterator.peek()!!.isLetter()) {
+                    identifier += iterator.next()
+                    when (iterator.current()) {
                         'f' -> {
-                            if (iterator.firstOrNull()?.isLetter() != true) {
+                            if (iterator.peek()?.isLetter() != true) {
                                 tokens.addLast(LexerToken(TokenType.If))
                                 identifier = null
                             }
                         }
                         's' -> {
-                            if (iterator.firstOrNull()?.isLetter() != true) {
+                            if (iterator.peek()?.isLetter() != true) {
                                 tokens.addLast(LexerToken(TokenType.IsOp))
                                 identifier = null
                             }
@@ -196,34 +201,26 @@ class Lexer(sourceCode: String) {
             'w' -> identifier = matchKeyword(TokenType.While,"w", "hile")
         }
         if (identifier != null) {
-            while (iterator.firstOrNull()?.isLetter() == true || iterator.firstOrNull() == '_') {
-                currentChar = iterator.removeFirst()
-                identifier += currentChar
-                columnNumber++
+            while (iterator.peek()?.isLetter() == true || iterator.peek() == '_') {
+                identifier += iterator.next()
             }
             tokens.addLast(LexerToken(TokenType.Identifier, identifier))
         }
     }
 
     private fun numericConstant() {
-        var number: String = currentChar.toString()
-        if (currentChar != '0') {
-            while (iterator.firstOrNull()?.isDigit() == true) {
-                currentChar = iterator.removeFirst()
-                number += currentChar
-                columnNumber++
+        var number: String = iterator.current().toString()
+        if (iterator.current() != '0') {
+            while (iterator.peek()?.isDigit() == true) {
+                number += iterator.next()
             }
         }
-        if (iterator.firstOrNull() == '.') {
-            currentChar = iterator.removeFirst()
-            number += currentChar
-            columnNumber++
-            if (iterator.firstOrNull()?.isDigit() != true)
-                throw LexisError(currentChar, lineNumber, columnNumber)
-            while (iterator.firstOrNull()?.isDigit() == true) {
-                currentChar = iterator.removeFirst()
-                number += currentChar
-                columnNumber++
+        if (iterator.peek() == '.') {
+            number += iterator.next()
+            if (iterator.peek()?.isDigit() != true)
+                throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
+            while (iterator.peek()?.isDigit() == true) {
+                number += iterator.next()
             }
             tokens.addLast(LexerToken(TokenType.NumConstant, number.toDouble()))
         } else
@@ -232,44 +229,40 @@ class Lexer(sourceCode: String) {
 
     private fun stringConstant() {
         var stringConstant = ""
-        while ((iterator.firstOrNull() ?: '"') != '"') {
-            currentChar = iterator.removeFirst()
-            if (currentChar == '\\') {
+        while ((iterator.peek() ?: '"') != '"') {
+            iterator.next()
+            if (iterator.current() == '\\') {
                 if (iterator.isEmpty())
-                    throw LexisError(currentChar, lineNumber, columnNumber) // TODO unknown cause of error
-                currentChar = iterator.removeFirst()
-                columnNumber++
+                    throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber) // TODO unknown cause of error
+                iterator.next()
             }
-            stringConstant += currentChar
-            columnNumber++
+            stringConstant += iterator.current()
         }
-        currentChar = iterator.removeFirstOrNull().let { it ?: throw LexisError(currentChar, lineNumber, columnNumber) }
-        columnNumber++
+        if (iterator.isEmpty())
+            throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
+        iterator.next()
         tokens.addLast(LexerToken(TokenType.StringConstant, stringConstant))
     }
 
     private fun comment() {
         tokens.addLast(LexerToken(TokenType.CommentSign))
         var comment = ""
-        while (iterator.firstOrNull()?.equals('\n') == false) {
-            currentChar = iterator.removeFirst()
-            comment += currentChar
-            columnNumber++
+        while (iterator.peek()?.equals('\n') == false) {
+            comment += iterator.next()
         }
         tokens.addLast(LexerToken(TokenType.Comment, comment))
     }
 
     private fun operator() {
         fun assignOperator(normalTokenType: TokenType, assignTokenType: TokenType) {
-            if (iterator.firstOrNull() == '=') {
-                currentChar = iterator.removeFirst()
-                columnNumber++
+            if (iterator.peek() == '=') {
+                iterator.next()
                 tokens.addLast(LexerToken(assignTokenType))
             } else
                 tokens.addLast(LexerToken(normalTokenType))
         }
 
-        when (currentChar) {
+        when (iterator.current()) {
             '+' -> assignOperator(TokenType.SumOp, TokenType.SumAssignOp)
             '-' -> assignOperator(TokenType.DifferenceOp, TokenType.DifferenceAssignOp)
             '*' -> assignOperator(TokenType.MultiplicationOp, TokenType.MultiplicationAssignOp)
@@ -281,12 +274,11 @@ class Lexer(sourceCode: String) {
             '>' -> assignOperator(TokenType.GreaterThanOp, TokenType.GreaterOrEqualOp)
             '=' -> assignOperator(TokenType.NormalAssignOp, TokenType.NormalComparisonOp)
             '&' -> {
-                if (iterator.first() == '=') {
-                    currentChar = iterator.removeFirst()
-                    columnNumber++
+                if (iterator.peek()!! == '=') {
+                    iterator.next()
                     assignOperator(TokenType.ReferenceAssignOp, TokenType.ReferenceComparisonOp)
                 } else {
-                    throw LexisError(currentChar, lineNumber, columnNumber)
+                    throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
                 }
             }
             ':' -> tokens.addLast(LexerToken(TokenType.TypeSign))
@@ -297,7 +289,7 @@ class Lexer(sourceCode: String) {
             ')' -> tokens.addLast(LexerToken(TokenType.RightParenthesesSign))
             '{' -> tokens.addLast(LexerToken(TokenType.LeftBraceSign))
             '}' -> tokens.addLast(LexerToken(TokenType.RightBraceSign))
-            else -> throw LexisError(currentChar, lineNumber, columnNumber)
+            else -> throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
         }
     }
 
