@@ -1,5 +1,8 @@
 package lexer
 
+import java.io.File
+import java.util.function.Supplier
+import java.util.stream.Stream
 import kotlin.math.pow
 
 enum class TokenType {
@@ -77,26 +80,36 @@ enum class TokenType {
 
 data class LexerToken(val type: TokenType, val value: Any? = null)
 
-internal class CodeIterator(sourceCode: String, private val tabSize: Int) {
-    private val iterator = sourceCode.iterator()
+internal class CodeIterator private constructor (private val tabSize: Int) {
+    private lateinit var sourceCodeSupplier: Supplier<Stream<String>>
+    private lateinit var iterator: CharIterator
+    private var supplierCount: Long = 0
+
+    constructor (file: File, tabSize: Int) : this(tabSize) {
+        sourceCodeSupplier = Supplier { file.bufferedReader().lines().skip(supplierCount) }
+        iterator = sourceCodeSupplier.get().findFirst().get().iterator()
+    }
+    constructor (sourceCode: String, tabSize: Int) : this(tabSize) {
+        sourceCodeSupplier = Supplier { Stream.of(sourceCode).skip(supplierCount) }
+        iterator = sourceCodeSupplier.get().findFirst().get().iterator()
+    }
+
     var lineNumber = 1
     var columnNumber = 0
     private var currentChar: Char = '§'
     private var nextChar: Char? = null
 
-    fun isEmpty() = !iterator.hasNext() && nextChar == null
+    fun isEmpty() = nextChar == null && !iterator.hasNext() && sourceCodeSupplier.get().skip(1).findAny().isEmpty
 
     fun current() = currentChar
 
     fun peek(): Char? {
-        if (nextChar == null && iterator.hasNext())
-            nextChar = iterator.nextChar()
+        getNextIfNull()
         return nextChar
     }
 
     fun next(): Char {
-        if (nextChar == null)
-            nextChar = iterator.nextChar()
+        getNextIfNull()
         currentChar = nextChar!!
         nextChar = null
         when (currentChar) {
@@ -109,10 +122,23 @@ internal class CodeIterator(sourceCode: String, private val tabSize: Int) {
         }
         return currentChar
     }
+
+    private fun getNextIfNull() {
+        if (nextChar == null) {
+            if (iterator.hasNext()) {
+                nextChar = iterator.nextChar()
+            }
+            else if (!sourceCodeSupplier.get().skip(1).findAny().isEmpty) {
+                nextChar = '\n'
+                supplierCount++
+                iterator = sourceCodeSupplier.get().findFirst().get().iterator()
+            }
+        }
+    }
 }
 
-class Lexer(sourceCode: String, tabSize: Int = 4) {
-    private val iterator = CodeIterator(sourceCode, tabSize)
+class Lexer private constructor () {
+    private lateinit var iterator: CodeIterator
     private val keywordsMap = mapOf(
         "Bool" to LexerToken(TokenType.BoolType),
         "Float" to LexerToken(TokenType.FloatType),
@@ -165,6 +191,13 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
         "{" to LexerToken(TokenType.LeftBraceSign),
         "}" to LexerToken(TokenType.RightBraceSign),
     )
+
+    constructor(file: File, tabSize: Int = 4) : this() {
+        iterator = CodeIterator(file, tabSize)
+    }
+    constructor(sourceCode: String, tabSize: Int = 4) : this() {
+        iterator = CodeIterator(sourceCode, tabSize)
+    }
 
     private fun parseNextToken(): LexerToken? {
         if (!iterator.isEmpty()) {

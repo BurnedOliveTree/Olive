@@ -2,11 +2,10 @@ package lexer
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import parseFile
+import java.io.File
 
 class LexerIntegrationTest: FunSpec({
     test("Should properly parse all tokens") {
-        val sourceCode = parseFile("build/resources/test/sample.cat")
         val tokens = listOf(
             LexerToken(TokenType.Identifier, "isPerfectNumber"),
             LexerToken(TokenType.LeftParenthesesSign),
@@ -85,9 +84,9 @@ class LexerIntegrationTest: FunSpec({
             LexerToken(TokenType.EndSign),
             LexerToken(TokenType.RightBraceSign)
         )
-        val lexer = Lexer(sourceCode)
+        val lexer = Lexer(File("build/resources/test/sample.cat"))
         tokens.forEach {
-            !lexer.isEmpty() shouldBe true
+            lexer.isEmpty() shouldBe false
             lexer.next() shouldBe it
         }
     }
