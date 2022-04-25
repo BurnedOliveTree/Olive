@@ -85,7 +85,7 @@ data class LexerToken(val type: TokenType, val value: Any? = null)
 internal class CodeIterator(sourceCode: String, private val tabSize: Int) {
     private val iterator = sourceCode.toQueue()
     var lineNumber = 0
-    var columnNumber = 0
+    var columnNumber = 1
     private var currentChar: Char = '§'
 
     fun isEmpty() = iterator.isEmpty()
@@ -216,29 +216,29 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
         if (!iterator.current().isDigit())
             return false
 
-        var number: String = iterator.current().toString()
+        val number = StringBuilder().append(iterator.current())
         if (iterator.current() != '0') {
             while (iterator.peek()?.isDigit() == true) {
-                number += iterator.next()
+                number.append(iterator.next())
             }
         }
         if (iterator.peek() == '.') {
-            number += iterator.next()
+            number.append(iterator.next())
             if (iterator.peek()?.isDigit() != true)
                 throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
             while (iterator.peek()?.isDigit() == true) {
-                number += iterator.next()
+                number.append(iterator.next())
             }
-            tokens.addLast(LexerToken(TokenType.NumConstant, number.toDouble()))
+            tokens.addLast(LexerToken(TokenType.NumConstant, number.toString().toDouble()))
         } else
-            tokens.addLast(LexerToken(TokenType.NumConstant, number.toInt()))
+            tokens.addLast(LexerToken(TokenType.NumConstant, number.toString().toInt()))
         return true
     }
 
     private fun stringConstant(): Boolean {
         if (iterator.current() != '"')
             return false
-        var stringConstant = ""
+        val stringConstant = StringBuilder()
         while ((iterator.peek() ?: '"') != '"') {
             iterator.next()
             if (iterator.current() == '\\') {
@@ -246,12 +246,12 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
                     throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber) // TODO unknown cause of error
                 iterator.next()
             }
-            stringConstant += iterator.current()
+            stringConstant.append(iterator.current())
         }
         if (iterator.isEmpty())
             throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
         iterator.next()
-        tokens.addLast(LexerToken(TokenType.StringConstant, stringConstant))
+        tokens.addLast(LexerToken(TokenType.StringConstant, stringConstant.toString()))
         return true
     }
 
@@ -259,11 +259,11 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
         if (iterator.current() != '#')
             return false
         tokens.addLast(LexerToken(TokenType.CommentSign))
-        var comment = ""
+        val comment = StringBuilder()
         while (iterator.peek()?.equals('\n') == false) {
-            comment += iterator.next()
+            comment.append(iterator.next())
         }
-        tokens.addLast(LexerToken(TokenType.Comment, comment))
+        tokens.addLast(LexerToken(TokenType.Comment, comment.toString()))
         return true
     }
 
