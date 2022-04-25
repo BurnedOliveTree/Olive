@@ -173,7 +173,7 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
             if (stringConstant()) return true
             if (comment()) return true
             if (operator()) return true
-            throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
+            throw UnrecognizedSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
         }
         return false
     }
@@ -213,7 +213,7 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
         if (iterator.peek() == '.') {
             number.append(iterator.next())
             if (iterator.peek()?.isDigit() != true)
-                throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
+                throw MissingSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber, "number")
             while (iterator.peek()?.isDigit() == true) {
                 number.append(iterator.next())
             }
@@ -231,13 +231,13 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
             iterator.next()
             if (iterator.current() == '\\') {
                 if (iterator.isEmpty())
-                    throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber) // TODO unknown cause of error
+                    throw MissingSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber, "any sign")
                 iterator.next()
             }
             stringConstant.append(iterator.current())
         }
         if (iterator.isEmpty())
-            throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
+            throw MissingSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber, "\"")
         iterator.next()
         tokens.addLast(LexerToken(TokenType.StringConstant, stringConstant.toString()))
         return true

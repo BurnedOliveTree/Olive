@@ -25,7 +25,7 @@ class LexerUnitTest: FunSpec({
             "\"",
             "\"invalid"
         ) { code ->
-            shouldThrowExactly<LexisError> { Lexer(code).peek() }
+            shouldThrowExactly<MissingSignError> { Lexer(code).peek() }
         }
     }
     context("NumericConstant tests") {
@@ -54,7 +54,7 @@ class LexerUnitTest: FunSpec({
             "123.",
             "0."
         ) { code ->
-            shouldThrowExactly<LexisError> { Lexer(code).peek() }
+            shouldThrowExactly<MissingSignError> { Lexer(code).peek() }
         }
     }
     test("UnitType test") {
@@ -216,7 +216,7 @@ class LexerUnitTest: FunSpec({
             "$",
             "'"
         ) { code ->
-            shouldThrowExactly<LexisError> { Lexer(code).peek() }
+            shouldThrowExactly<UnrecognizedSignError> { Lexer(code).peek() }
         }
     }
 })

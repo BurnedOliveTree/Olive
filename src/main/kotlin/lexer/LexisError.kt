@@ -1,10 +1,17 @@
-package lexer;
+package lexer
 
-class LexisError(
-    private val foundToken: Char,
-    private val line: Int,
-    private val column: Int
-): Exception() {
+abstract class LexisError(
+    protected val foundToken: Char,
+    protected val line: Int,
+    protected val column: Int
+): Exception()
+
+class UnrecognizedSignError(foundToken: Char, line: Int, column: Int): LexisError(foundToken, line, column) {
     override val message: String
         get() = "unrecognized token: $foundToken found at $line:$column"
+}
+
+class MissingSignError(foundToken: Char, line: Int, column: Int, private val expectedSignGroup: String): LexisError(foundToken, line, column) {
+    override val message: String
+        get() = "expected a $expectedSignGroup after token: $foundToken found at $line:$column"
 }
