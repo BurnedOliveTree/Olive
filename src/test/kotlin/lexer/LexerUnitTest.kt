@@ -6,6 +6,7 @@ import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 
 class LexerUnitTest: FunSpec({
+    // TODO whitespace and positions tests
     context("StringConstant tests") {
         withData(
             nameFn = { it.first },
@@ -182,6 +183,12 @@ class LexerUnitTest: FunSpec({
     test("ReturnKeyword test") {
         Lexer("return").peek() shouldBe LexerToken(TokenType.Return)
     }
+    test("Whitespace test") {
+        val lexer = Lexer("is\n\n\n0.")
+        lexer.next()
+        lexer.next()
+        lexer.next()
+    }
     context("Identifier tests") {
         withData(
             nameFn = { it.first },
@@ -199,6 +206,7 @@ class LexerUnitTest: FunSpec({
     context("Comment tests") {
         withData(
             nameFn = { it.first },
+            "#" to LexerToken(TokenType.Comment, ""),
             "# " to LexerToken(TokenType.Comment, " "),
             "# \"" to LexerToken(TokenType.Comment, " \""),
             "# some comment \n" to LexerToken(TokenType.Comment, " some comment "),

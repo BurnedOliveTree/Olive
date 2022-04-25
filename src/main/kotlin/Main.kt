@@ -2,7 +2,8 @@ import lexer.Lexer
 import java.io.File
 
 fun parseFile(filename: String): String {
-    return File(filename).readLines().joinToString("\n")
+    val file = File(filename)
+    return file.readLines().joinToString("\n")
 }
 
 fun main(args: Array<String>) {

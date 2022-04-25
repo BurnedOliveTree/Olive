@@ -1,5 +1,6 @@
 package lexer
 
+// TODO lazy
 internal fun String.toQueue(): ArrayDeque<Char> {
     val queue = ArrayDeque<Char>()
     this.forEach { queue.addLast(it) }
@@ -83,7 +84,7 @@ data class LexerToken(val type: TokenType, val value: Any? = null)
 
 class Lexer(sourceCode: String) {
     private val tokens: ArrayDeque<LexerToken> = ArrayDeque()
-    private val iterator: ArrayDeque<Char> = sourceCode.toQueue()
+    private val iterator: ArrayDeque<Char> = sourceCode.toQueue() // TODO own iterator class with lineNumber and columnNumber
     private var currentChar: Char = '\n'
     private var lineNumber = 0
     private var columnNumber = 0
@@ -94,6 +95,7 @@ class Lexer(sourceCode: String) {
             shouldRepeat = false
             currentChar = iterator.removeFirst()
             when (currentChar) {
+                // TODO isWhitespace()
                 ' ' -> {
                     columnNumber++
                     shouldRepeat = true
@@ -109,7 +111,7 @@ class Lexer(sourceCode: String) {
                 }
                 else -> {
                     columnNumber++
-                    when {
+                    when { // TODO do not check first sign here
                         currentChar.isLetter() || currentChar == '_' -> keywordOrIdentifier()
                         currentChar.isDigit() -> numericConstant()
                         currentChar == '"' -> stringConstant()
@@ -234,7 +236,7 @@ class Lexer(sourceCode: String) {
             currentChar = iterator.removeFirst()
             if (currentChar == '\\') {
                 if (iterator.isEmpty())
-                    throw LexisError(currentChar, lineNumber, columnNumber)
+                    throw LexisError(currentChar, lineNumber, columnNumber) // TODO unknown cause of error
                 currentChar = iterator.removeFirst()
                 columnNumber++
             }
