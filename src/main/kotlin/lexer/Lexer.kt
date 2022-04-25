@@ -111,6 +111,26 @@ internal class CodeIterator(sourceCode: String, private val tabSize: Int) {
 class Lexer(sourceCode: String, tabSize: Int = 4) {
     private val tokens: ArrayDeque<LexerToken> = ArrayDeque()
     private val iterator = CodeIterator(sourceCode, tabSize)
+    private val keywordsMap = mapOf(
+        "Bool" to LexerToken(TokenType.BoolType),
+        "Float" to LexerToken(TokenType.FloatType),
+        "Int" to LexerToken(TokenType.IntType),
+        "Number" to LexerToken(TokenType.NumberType),
+        "String" to LexerToken(TokenType.StringType),
+        "Unit" to LexerToken(TokenType.UnitType),
+        "and" to LexerToken(TokenType.AndOp),
+        "as" to LexerToken(TokenType.CastOp),
+        "else" to LexerToken(TokenType.Else),
+        "false" to LexerToken(TokenType.BoolConstant, false),
+        "if" to LexerToken(TokenType.If),
+        "is" to LexerToken(TokenType.IsOp),
+        "not" to LexerToken(TokenType.NotOp),
+        "or" to LexerToken(TokenType.OrOp),
+        "return" to LexerToken(TokenType.Return),
+        "true" to LexerToken(TokenType.BoolConstant, true),
+        "var" to LexerToken(TokenType.Variable),
+        "while" to LexerToken(TokenType.While),
+    )
 
     private fun parseNextToken(): Boolean {
         if (!iterator.isEmpty()) {
@@ -135,79 +155,15 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
     private fun keywordOrIdentifier(): Boolean {
         fun Char.isIdentifierSign() = this.isLetter() || this == '_'
 
-        fun matchKeyword(tokenType: TokenType, identifier: String, keyword: String, value: Any? = null): String? {
-            var newIdentifier = identifier
-            val keywordIterator = keyword.toQueue()
-            while (!keywordIterator.isEmpty() && iterator.peek() == keywordIterator.first()) {
-                keywordIterator.removeFirst()
-                newIdentifier += iterator.next()
-            }
-            return if (!keywordIterator.isEmpty() || (iterator.peek()?.isLetter() == true)) {
-                newIdentifier
-            } else {
-                tokens.addLast(LexerToken(tokenType, value))
-                null
-            }
-        }
-
         if (!iterator.current().isIdentifierSign())
             return false
 
-        var identifier: String? = iterator.current().toString()
-        when (iterator.current()) { // TODO dictionary instead of switch
-            'B' -> identifier = matchKeyword(TokenType.BoolType,"B", "ool")
-            'F' -> identifier = matchKeyword(TokenType.FloatType,"F", "loat")
-            'I' -> identifier = matchKeyword(TokenType.IntType,"I", "nt")
-            'N' -> identifier = matchKeyword(TokenType.NumberType,"N", "umber")
-            'S' -> identifier = matchKeyword(TokenType.StringType,"S", "tring")
-            'U' -> identifier = matchKeyword(TokenType.UnitType,"U", "nit")
-            'a' -> {
-                if (iterator.peek()!!.isLetter()) {
-                    identifier += iterator.next()
-                    when (iterator.current()) {
-                        'n' -> identifier = matchKeyword(TokenType.AndOp, "an", "d")
-                        's' -> {
-                            if (iterator.peek()?.isLetter() != true) {
-                                tokens.addLast(LexerToken(TokenType.CastOp))
-                                identifier = null
-                            }
-                        }
-                    }
-                }
-            }
-            'e' -> identifier = matchKeyword(TokenType.Else,"e", "lse")
-            'f' -> identifier = matchKeyword(TokenType.BoolConstant,"f", "alse", false)
-            'i' -> {
-                if (iterator.peek()!!.isLetter()) {
-                    identifier += iterator.next()
-                    when (iterator.current()) {
-                        'f' -> {
-                            if (iterator.peek()?.isLetter() != true) {
-                                tokens.addLast(LexerToken(TokenType.If))
-                                identifier = null
-                            }
-                        }
-                        's' -> {
-                            if (iterator.peek()?.isLetter() != true) {
-                                tokens.addLast(LexerToken(TokenType.IsOp))
-                                identifier = null
-                            }
-                        }
-                    }
-                }
-            }
-            'n' -> identifier = matchKeyword(TokenType.NotOp,"n", "ot")
-            'o' -> identifier = matchKeyword(TokenType.OrOp,"o", "r")
-            'r' -> identifier = matchKeyword(TokenType.Return,"r", "eturn")
-            't' -> identifier = matchKeyword(TokenType.BoolConstant,"t", "rue", true)
-            'v' -> identifier = matchKeyword(TokenType.Variable,"v", "ar")
-            'w' -> identifier = matchKeyword(TokenType.While,"w", "hile")
+        val identifier = StringBuilder().append(iterator.current())
+        while (iterator.peek()?.isIdentifierSign() == true) {
+            identifier.append(iterator.next())
         }
-        if (identifier != null) {
-            while (iterator.peek()?.isIdentifierSign() == true) {
-                identifier += iterator.next()
-            }
-            tokens.addLast(LexerToken(TokenType.Identifier, identifier))
+        keywordsMap[identifier.toString()].let {
+            tokens.addLast(it ?: LexerToken(TokenType.Identifier, identifier.toString()))
         }
         return true
     }
