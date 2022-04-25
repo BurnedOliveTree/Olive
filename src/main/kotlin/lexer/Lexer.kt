@@ -110,7 +110,6 @@ internal class CodeIterator(sourceCode: String, private val tabSize: Int) {
 }
 
 class Lexer(sourceCode: String, tabSize: Int = 4) {
-    private val tokens: ArrayDeque<LexerToken> = ArrayDeque()
     private val iterator = CodeIterator(sourceCode, tabSize)
     private val keywordsMap = mapOf(
         "Bool" to LexerToken(TokenType.BoolType),
@@ -165,18 +164,18 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
         "}" to LexerToken(TokenType.RightBraceSign),
     )
 
-    private fun parseNextToken(): Boolean {
+    private fun parseNextToken(): LexerToken? {
         if (!iterator.isEmpty()) {
             iterator.next()
             skipWhitespace()
-            if (keywordOrIdentifier()) return true
-            if (numericConstant()) return true
-            if (stringConstant()) return true
-            if (comment()) return true
-            if (operator()) return true
+            keywordOrIdentifier()?.let { return it }
+            numericConstant()?.let { return it }
+            stringConstant()?.let { return it }
+            comment()?.let { return it }
+            operator()?.let { return it }
             throw UnrecognizedSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
         }
-        return false
+        return null
     }
 
     private fun skipWhitespace() {
@@ -185,25 +184,24 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
         }
     }
 
-    private fun keywordOrIdentifier(): Boolean {
+    private fun keywordOrIdentifier(): LexerToken? {
         fun Char.isIdentifierSign() = this.isLetter() || this == '_'
 
         if (!iterator.current().isIdentifierSign())
-            return false
+            return null
 
         val identifier = StringBuilder().append(iterator.current())
         while (iterator.peek()?.isIdentifierSign() == true) {
             identifier.append(iterator.next())
         }
         keywordsMap[identifier.toString()].let {
-            tokens.addLast(it ?: LexerToken(TokenType.Identifier, identifier.toString()))
+            return it ?: LexerToken(TokenType.Identifier, identifier.toString())
         }
-        return true
     }
 
-    private fun numericConstant(): Boolean {
+    private fun numericConstant(): LexerToken? {
         if (!iterator.current().isDigit())
-            return false
+            return null
 
         val number = StringBuilder().append(iterator.current())
         if (iterator.current() != '0') {
@@ -211,22 +209,21 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
                 number.append(iterator.next())
             }
         }
-        if (iterator.peek() == '.') {
+        return if (iterator.peek() == '.') {
             number.append(iterator.next())
             if (iterator.peek()?.isDigit() != true)
                 throw MissingSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber, "number")
             while (iterator.peek()?.isDigit() == true) {
                 number.append(iterator.next())
             }
-            tokens.addLast(LexerToken(TokenType.NumConstant, number.toString().toDouble()))
+            LexerToken(TokenType.NumConstant, number.toString().toDouble())
         } else
-            tokens.addLast(LexerToken(TokenType.NumConstant, number.toString().toInt()))
-        return true
+            LexerToken(TokenType.NumConstant, number.toString().toInt())
     }
 
-    private fun stringConstant(): Boolean {
+    private fun stringConstant(): LexerToken? {
         if (iterator.current() != '"')
-            return false
+            return null
         val stringConstant = StringBuilder()
         while ((iterator.peek() ?: '"') != '"') {
             iterator.next()
@@ -240,48 +237,28 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
         if (iterator.isEmpty())
             throw MissingSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber, "\"")
         iterator.next()
-        tokens.addLast(LexerToken(TokenType.StringConstant, stringConstant.toString()))
-        return true
+        return LexerToken(TokenType.StringConstant, stringConstant.toString())
     }
 
-    private fun comment(): Boolean {
+    private fun comment(): LexerToken? {
         if (iterator.current() != '#')
-            return false
-        tokens.addLast(LexerToken(TokenType.CommentSign))
+            return null
         val comment = StringBuilder()
         while (iterator.peek()?.equals('\n') == false) {
             comment.append(iterator.next())
         }
-        tokens.addLast(LexerToken(TokenType.Comment, comment.toString()))
-        return true
+        return LexerToken(TokenType.Comment, comment.toString())
     }
 
-    private fun operator(): Boolean {
+    private fun operator(): LexerToken? {
         val identifier = StringBuilder().append(iterator.current())
         while (!iterator.isEmpty() && operatorsMap[identifier.toString() + iterator.peek()!!] != null) {
             identifier.append(iterator.next())
         }
-        operatorsMap[identifier.toString()]?.let {
-            tokens.addLast(it)
-            return true
-        } ?: return false
+        return operatorsMap[identifier.toString()]
     }
 
-    fun next(): Boolean {
-        if (tokens.isEmpty())
-            parseNextToken()
-        return tokens.removeFirstOrNull() != null
-    }
+    fun next() = parseNextToken()!!
 
-    fun peek(): LexerToken {
-        if (tokens.isEmpty())
-            parseNextToken()
-        return tokens.first()
-    }
-
-    fun hasNext(): Boolean {
-        if (tokens.isEmpty())
-            parseNextToken()
-        return tokens.firstOrNull() != null
-    }
+    fun isEmpty() = iterator.isEmpty()
 }

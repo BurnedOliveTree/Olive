@@ -13,8 +13,7 @@ fun main(args: Array<String>) {
     val sourceCode = parseFile(args[0])
     val lexer = Lexer(sourceCode)
 
-    while (lexer.hasNext()) {
-        println(lexer.peek())
-        lexer.next()
+    while (!lexer.isEmpty()) {
+        println(lexer.next())
     }
 }
