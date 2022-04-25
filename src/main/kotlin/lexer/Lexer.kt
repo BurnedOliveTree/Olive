@@ -114,7 +114,7 @@ internal class CodeIterator private constructor (private val tabSize: Int) {
         nextChar = null
         when (currentChar) {
             '\t' -> columnNumber += tabSize
-            '\n', '\r' -> {
+            '\n' -> { // 'r' is being omitted as every other white space sign
                 lineNumber++
                 columnNumber = 0
             }
