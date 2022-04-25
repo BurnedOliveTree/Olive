@@ -84,8 +84,8 @@ data class LexerToken(val type: TokenType, val value: Any? = null)
 
 internal class CodeIterator(sourceCode: String, private val tabSize: Int) {
     private val iterator = sourceCode.toQueue()
-    var lineNumber = 0
-    var columnNumber = 1
+    var lineNumber = 1
+    var columnNumber = 0
     private var currentChar: Char = '§'
 
     fun isEmpty() = iterator.isEmpty()
@@ -100,7 +100,7 @@ internal class CodeIterator(sourceCode: String, private val tabSize: Int) {
             '\t' -> columnNumber += tabSize
             '\n', '\r' -> {
                 lineNumber++
-                columnNumber = 0
+                columnNumber = 1
             }
             else -> columnNumber++
         }
@@ -130,6 +130,38 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
         "true" to LexerToken(TokenType.BoolConstant, true),
         "var" to LexerToken(TokenType.Variable),
         "while" to LexerToken(TokenType.While),
+    )
+    private val operatorsMap = mapOf(
+        "+" to LexerToken(TokenType.SumOp),
+        "+=" to LexerToken(TokenType.SumAssignOp),
+        "-" to LexerToken(TokenType.DifferenceOp),
+        "-=" to LexerToken(TokenType.DifferenceAssignOp),
+        "*" to LexerToken(TokenType.MultiplicationOp),
+        "*=" to LexerToken(TokenType.MultiplicationAssignOp),
+        "/" to LexerToken(TokenType.DivisionOp),
+        "/=" to LexerToken(TokenType.DivisionAssignOp),
+        "^" to LexerToken(TokenType.ExponentOp),
+        "^=" to LexerToken(TokenType.ExponentAssignOp),
+        "|" to LexerToken(TokenType.RootOp),
+        "|=" to LexerToken(TokenType.RootAssignOp),
+        "%" to LexerToken(TokenType.ModuloOp),
+        "%=" to LexerToken(TokenType.ModuloAssignOp),
+        "<" to LexerToken(TokenType.LesserThanOp),
+        "<=" to LexerToken(TokenType.LesserOrEqualOp),
+        ">" to LexerToken(TokenType.GreaterThanOp),
+        ">=" to LexerToken(TokenType.GreaterOrEqualOp),
+        "=" to LexerToken(TokenType.NormalAssignOp),
+        "==" to LexerToken(TokenType.NormalComparisonOp),
+        "&=" to LexerToken(TokenType.ReferenceAssignOp),
+        "&==" to LexerToken(TokenType.ReferenceComparisonOp),
+        ":" to LexerToken(TokenType.TypeSign),
+        ";" to LexerToken(TokenType.EndSign),
+        "," to LexerToken(TokenType.EnumerationSign),
+        "." to LexerToken(TokenType.MemberReferenceSign),
+        "(" to LexerToken(TokenType.LeftParenthesesSign),
+        ")" to LexerToken(TokenType.RightParenthesesSign),
+        "{" to LexerToken(TokenType.LeftBraceSign),
+        "}" to LexerToken(TokenType.RightBraceSign),
     )
 
     private fun parseNextToken(): Boolean {
@@ -224,44 +256,14 @@ class Lexer(sourceCode: String, tabSize: Int = 4) {
     }
 
     private fun operator(): Boolean {
-        fun assignOperator(normalTokenType: TokenType, assignTokenType: TokenType) {
-            if (iterator.peek() == '=') {
-                iterator.next()
-                tokens.addLast(LexerToken(assignTokenType))
-            } else
-                tokens.addLast(LexerToken(normalTokenType))
+        val identifier = StringBuilder().append(iterator.current())
+        while (!iterator.isEmpty() && operatorsMap[identifier.toString() + iterator.peek()!!] != null) {
+            identifier.append(iterator.next())
         }
-
-        when (iterator.current()) {
-            '+' -> assignOperator(TokenType.SumOp, TokenType.SumAssignOp)
-            '-' -> assignOperator(TokenType.DifferenceOp, TokenType.DifferenceAssignOp)
-            '*' -> assignOperator(TokenType.MultiplicationOp, TokenType.MultiplicationAssignOp)
-            '/' -> assignOperator(TokenType.DivisionOp, TokenType.DivisionAssignOp)
-            '^' -> assignOperator(TokenType.ExponentOp, TokenType.ExponentAssignOp)
-            '|' -> assignOperator(TokenType.RootOp, TokenType.RootAssignOp)
-            '%' -> assignOperator(TokenType.ModuloOp, TokenType.ModuloAssignOp)
-            '<' -> assignOperator(TokenType.LesserThanOp, TokenType.LesserOrEqualOp)
-            '>' -> assignOperator(TokenType.GreaterThanOp, TokenType.GreaterOrEqualOp)
-            '=' -> assignOperator(TokenType.NormalAssignOp, TokenType.NormalComparisonOp)
-            '&' -> {
-                if (iterator.peek()!! == '=') {
-                    iterator.next()
-                    assignOperator(TokenType.ReferenceAssignOp, TokenType.ReferenceComparisonOp)
-                } else {
-                    throw LexisError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
-                }
-            }
-            ':' -> tokens.addLast(LexerToken(TokenType.TypeSign))
-            ';' -> tokens.addLast(LexerToken(TokenType.EndSign))
-            ',' -> tokens.addLast(LexerToken(TokenType.EnumerationSign))
-            '.' -> tokens.addLast(LexerToken(TokenType.MemberReferenceSign))
-            '(' -> tokens.addLast(LexerToken(TokenType.LeftParenthesesSign))
-            ')' -> tokens.addLast(LexerToken(TokenType.RightParenthesesSign))
-            '{' -> tokens.addLast(LexerToken(TokenType.LeftBraceSign))
-            '}' -> tokens.addLast(LexerToken(TokenType.RightBraceSign))
-            else -> return false
-        }
-        return true
+        operatorsMap[identifier.toString()]?.let {
+            tokens.addLast(it)
+            return true
+        } ?: return false
     }
 
     fun next(): Boolean {
