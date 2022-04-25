@@ -183,12 +183,6 @@ class LexerUnitTest: FunSpec({
     test("ReturnKeyword test") {
         Lexer("return").peek() shouldBe LexerToken(TokenType.Return)
     }
-    test("Whitespace test") {
-        val lexer = Lexer("is\n\n\n0.")
-        lexer.next()
-        lexer.next()
-        lexer.next()
-    }
     context("Identifier tests") {
         withData(
             nameFn = { it.first },
