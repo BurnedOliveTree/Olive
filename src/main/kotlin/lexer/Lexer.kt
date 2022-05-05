@@ -110,10 +110,11 @@ class CodeIterator private constructor (private val tabSize: Int) {
         nextChar = null
         when (currentChar) {
             '\t' -> column += tabSize
-            '\n' -> { // 'r' is being omitted as every other white space sign // TODO /r will be in comment
+            '\n' -> {
                 line++
                 column = 0
             }
+            '\r' -> next() // 'r' is being omitted as I don't expect this to run on Commodore, ZX Spectrum, Mac Classic or any other system that has only /r
             else -> column++
         }
         return currentChar
@@ -183,6 +184,12 @@ class Lexer (
         ")" to (TokenType.RightParenthesesSign),
         "{" to (TokenType.LeftBraceSign),
         "}" to (TokenType.RightBraceSign),
+    )
+    private val specialMap = mapOf(
+        "\\b" to '\b',
+        "\\n" to '\n',
+        "\\r" to '\r',
+        "\\t" to '\t',
     )
 
     private fun parseNextToken(): LexerToken? {
@@ -262,6 +269,7 @@ class Lexer (
         if (iterator.current() != '"')
             return null
         val stringConstant = StringBuilder()
+        println(("\\"+"n").length)
         while ((iterator.peek() ?: '"') != '"') {
             if (stringConstant.length >= maximalSize)
                 throw TokenTooBigError(iterator.current(), iterator.line, iterator.column)
@@ -269,9 +277,12 @@ class Lexer (
             if (iterator.current() == '\\') {
                 if (iterator.isEmpty())
                     throw MissingSignError(iterator.current(), iterator.line, iterator.column, "any sign")
-                iterator.next() // TODO in case of \n or other only n would append
-            }
-            stringConstant.append(iterator.current())
+                iterator.next()
+                specialMap["\\" + iterator.current()].let {
+                    stringConstant.append(it ?: iterator.current())
+                }
+            } else
+                stringConstant.append(iterator.current())
         }
         if (iterator.isEmpty())
             throw MissingSignError(iterator.current(), iterator.line, iterator.column, "\"")
