@@ -1,17 +1,16 @@
 import lexer.CodeIterator
 import lexer.Lexer
-import java.io.File
+import java.io.FileReader
 
 fun main(args: Array<String>) {
     if (args.isEmpty())
         throw IllegalArgumentException("File name must be specified!")
 
-    val lexer = Lexer(CodeIterator(File(args[0]))) // TODO close file
-//    .useLines {
-//
-//    }
+    FileReader(args[0]).use {
+        val lexer = Lexer(CodeIterator(it))
 
-    while (!lexer.isEmpty()) {
-        println(lexer.next())
+        while (!lexer.isEmpty()) {
+            println(lexer.next())
+        }
     }
 }

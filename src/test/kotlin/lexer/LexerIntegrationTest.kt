@@ -2,7 +2,7 @@ package lexer
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import java.io.File
+import java.io.FileReader
 
 class LexerIntegrationTest: FunSpec({
     test("Should properly parse all tokens") {
@@ -84,10 +84,13 @@ class LexerIntegrationTest: FunSpec({
             LexerToken(TokenType.EndSign, null, 15, 35),
             LexerToken(TokenType.RightBraceSign, null, 16, 1)
         )
-        val lexer = Lexer(CodeIterator(File("build/resources/test/sample.cat")))
-        tokens.forEach {
-            lexer.isEmpty() shouldBe false
-            lexer.next() shouldBe it
+        FileReader("build/resources/test/sample.cat").use { file ->
+            val lexer = Lexer(CodeIterator(file))
+
+            tokens.forEach {
+                lexer.isEmpty() shouldBe false
+                lexer.next() shouldBe it
+            }
         }
     }
 })

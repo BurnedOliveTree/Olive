@@ -1,8 +1,6 @@
 package lexer
 
-import java.io.File
-import java.util.function.Supplier
-import java.util.stream.Stream
+import java.io.*
 import kotlin.math.pow
 
 enum class TokenType {
@@ -80,17 +78,13 @@ enum class TokenType {
 data class LexerToken(val type: TokenType, val value: Any?, val line: Int, val column: Int)
 
 class CodeIterator private constructor (private val tabSize: Int) {
-    private lateinit var sourceCodeSupplier: Supplier<Stream<String>>
-    private lateinit var iterator: CharIterator
-    private var supplierCount: Long = 0
+    private lateinit var iterator: Reader
 
-    constructor (file: File, tabSize: Int = 4) : this(tabSize) { // TODO change file handling
-        sourceCodeSupplier = Supplier { file.bufferedReader().lines().skip(supplierCount) }
-        iterator = sourceCodeSupplier.get().findFirst().get().iterator()
+    constructor (file: FileReader, tabSize: Int = 4) : this(tabSize) {
+        iterator = file
     }
     constructor (sourceCode: String, tabSize: Int = 4) : this(tabSize) {
-        sourceCodeSupplier = Supplier { Stream.of(sourceCode).skip(supplierCount) }
-        iterator = sourceCodeSupplier.get().findFirst().get().iterator()
+        iterator = StringReader(sourceCode)
     }
 
     var line = 1
@@ -98,7 +92,10 @@ class CodeIterator private constructor (private val tabSize: Int) {
     private var currentChar: Char = '§'
     private var nextChar: Char? = null
 
-    fun isEmpty() = nextChar == null && !iterator.hasNext() && sourceCodeSupplier.get().skip(1).findAny().isEmpty
+    fun isEmpty(): Boolean {
+        getNextIfNull()
+        return nextChar == null
+    }
 
     fun current() = currentChar
 
@@ -124,13 +121,8 @@ class CodeIterator private constructor (private val tabSize: Int) {
 
     private fun getNextIfNull() {
         if (nextChar == null) {
-            if (iterator.hasNext()) {
-                nextChar = iterator.nextChar()
-            }
-            else if (!sourceCodeSupplier.get().skip(1).findAny().isEmpty) {
-                nextChar = '\n'
-                supplierCount++
-                iterator = sourceCodeSupplier.get().findFirst().get().iterator()
+            iterator.read().let {
+                nextChar = if (it >= 0) { it.toChar() } else { null }
             }
         }
     }
