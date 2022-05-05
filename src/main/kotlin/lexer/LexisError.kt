@@ -15,3 +15,8 @@ class MissingSignError(foundToken: Char, line: Int, column: Int, private val exp
     override val message: String
         get() = "expected a $expectedSignGroup after token: $foundToken found at $line:$column"
 }
+
+class TokenTooBigError(foundToken: Char, line: Int, column: Int): LexisError(foundToken, line, column) {
+    override val message: String
+        get() = "token value is too big: $foundToken found at $line:$column"
+}

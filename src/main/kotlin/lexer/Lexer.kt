@@ -49,7 +49,6 @@ enum class TokenType {
     GreaterOrEqualOp,
 
     TypeSign,
-    CommentSign,
     EndSign,
     EnumerationSign,
     MemberReferenceSign,
@@ -78,24 +77,24 @@ enum class TokenType {
         this in listOf(NormalAssignOp, ReferenceAssignOp, SumAssignOp, DifferenceAssignOp, MultiplicationAssignOp, ExponentAssignOp, DivisionAssignOp, RootAssignOp, ModuloAssignOp)
 }
 
-data class LexerToken(val type: TokenType, val value: Any? = null)
+data class LexerToken(val type: TokenType, val value: Any?, val line: Int, val column: Int)
 
-internal class CodeIterator private constructor (private val tabSize: Int) {
+class CodeIterator private constructor (private val tabSize: Int) {
     private lateinit var sourceCodeSupplier: Supplier<Stream<String>>
     private lateinit var iterator: CharIterator
     private var supplierCount: Long = 0
 
-    constructor (file: File, tabSize: Int) : this(tabSize) {
+    constructor (file: File, tabSize: Int = 4) : this(tabSize) { // TODO change file handling
         sourceCodeSupplier = Supplier { file.bufferedReader().lines().skip(supplierCount) }
         iterator = sourceCodeSupplier.get().findFirst().get().iterator()
     }
-    constructor (sourceCode: String, tabSize: Int) : this(tabSize) {
+    constructor (sourceCode: String, tabSize: Int = 4) : this(tabSize) {
         sourceCodeSupplier = Supplier { Stream.of(sourceCode).skip(supplierCount) }
         iterator = sourceCodeSupplier.get().findFirst().get().iterator()
     }
 
-    var lineNumber = 1
-    var columnNumber = 0
+    var line = 1
+    var column = 0
     private var currentChar: Char = '§'
     private var nextChar: Char? = null
 
@@ -113,12 +112,12 @@ internal class CodeIterator private constructor (private val tabSize: Int) {
         currentChar = nextChar!!
         nextChar = null
         when (currentChar) {
-            '\t' -> columnNumber += tabSize
-            '\n' -> { // 'r' is being omitted as every other white space sign
-                lineNumber++
-                columnNumber = 0
+            '\t' -> column += tabSize
+            '\n' -> { // 'r' is being omitted as every other white space sign // TODO /r will be in comment
+                line++
+                column = 0
             }
-            else -> columnNumber++
+            else -> column++
         }
         return currentChar
     }
@@ -137,67 +136,62 @@ internal class CodeIterator private constructor (private val tabSize: Int) {
     }
 }
 
-class Lexer private constructor () {
-    private lateinit var iterator: CodeIterator
+class Lexer (
+    private val iterator: CodeIterator,
+    private val maximalSize: Int = 2048
+) {
     private val keywordsMap = mapOf(
-        "Bool" to LexerToken(TokenType.BoolType),
-        "Float" to LexerToken(TokenType.FloatType),
-        "Int" to LexerToken(TokenType.IntType),
-        "Number" to LexerToken(TokenType.NumberType),
-        "String" to LexerToken(TokenType.StringType),
-        "Unit" to LexerToken(TokenType.UnitType),
-        "and" to LexerToken(TokenType.AndOp),
-        "as" to LexerToken(TokenType.CastOp),
-        "else" to LexerToken(TokenType.Else),
-        "false" to LexerToken(TokenType.BoolConstant, false),
-        "if" to LexerToken(TokenType.If),
-        "is" to LexerToken(TokenType.IsOp),
-        "not" to LexerToken(TokenType.NotOp),
-        "or" to LexerToken(TokenType.OrOp),
-        "return" to LexerToken(TokenType.Return),
-        "true" to LexerToken(TokenType.BoolConstant, true),
-        "var" to LexerToken(TokenType.Variable),
-        "while" to LexerToken(TokenType.While),
+        "Bool" to (TokenType.BoolType to null),
+        "Float" to (TokenType.FloatType to null),
+        "Int" to (TokenType.IntType to null),
+        "Number" to (TokenType.NumberType to null),
+        "String" to (TokenType.StringType to null),
+        "Unit" to (TokenType.UnitType to null),
+        "and" to (TokenType.AndOp to null),
+        "as" to (TokenType.CastOp to null),
+        "else" to (TokenType.Else to null),
+        "false" to (TokenType.BoolConstant to false),
+        "if" to (TokenType.If to null),
+        "is" to (TokenType.IsOp to null),
+        "not" to (TokenType.NotOp to null),
+        "or" to (TokenType.OrOp to null),
+        "return" to (TokenType.Return to null),
+        "true" to (TokenType.BoolConstant to true),
+        "var" to (TokenType.Variable to null),
+        "while" to (TokenType.While to null),
     )
     private val operatorsMap = mapOf(
-        "+" to LexerToken(TokenType.SumOp),
-        "+=" to LexerToken(TokenType.SumAssignOp),
-        "-" to LexerToken(TokenType.DifferenceOp),
-        "-=" to LexerToken(TokenType.DifferenceAssignOp),
-        "*" to LexerToken(TokenType.MultiplicationOp),
-        "*=" to LexerToken(TokenType.MultiplicationAssignOp),
-        "/" to LexerToken(TokenType.DivisionOp),
-        "/=" to LexerToken(TokenType.DivisionAssignOp),
-        "^" to LexerToken(TokenType.ExponentOp),
-        "^=" to LexerToken(TokenType.ExponentAssignOp),
-        "|" to LexerToken(TokenType.RootOp),
-        "|=" to LexerToken(TokenType.RootAssignOp),
-        "%" to LexerToken(TokenType.ModuloOp),
-        "%=" to LexerToken(TokenType.ModuloAssignOp),
-        "<" to LexerToken(TokenType.LesserThanOp),
-        "<=" to LexerToken(TokenType.LesserOrEqualOp),
-        ">" to LexerToken(TokenType.GreaterThanOp),
-        ">=" to LexerToken(TokenType.GreaterOrEqualOp),
-        "=" to LexerToken(TokenType.NormalAssignOp),
-        "==" to LexerToken(TokenType.NormalComparisonOp),
-        "&=" to LexerToken(TokenType.ReferenceAssignOp),
-        "&==" to LexerToken(TokenType.ReferenceComparisonOp),
-        ":" to LexerToken(TokenType.TypeSign),
-        ";" to LexerToken(TokenType.EndSign),
-        "," to LexerToken(TokenType.EnumerationSign),
-        "." to LexerToken(TokenType.MemberReferenceSign),
-        "(" to LexerToken(TokenType.LeftParenthesesSign),
-        ")" to LexerToken(TokenType.RightParenthesesSign),
-        "{" to LexerToken(TokenType.LeftBraceSign),
-        "}" to LexerToken(TokenType.RightBraceSign),
+        "+" to (TokenType.SumOp),
+        "+=" to (TokenType.SumAssignOp),
+        "-" to (TokenType.DifferenceOp),
+        "-=" to (TokenType.DifferenceAssignOp),
+        "*" to (TokenType.MultiplicationOp),
+        "*=" to (TokenType.MultiplicationAssignOp),
+        "/" to (TokenType.DivisionOp),
+        "/=" to (TokenType.DivisionAssignOp),
+        "^" to (TokenType.ExponentOp),
+        "^=" to (TokenType.ExponentAssignOp),
+        "|" to (TokenType.RootOp),
+        "|=" to (TokenType.RootAssignOp),
+        "%" to (TokenType.ModuloOp),
+        "%=" to (TokenType.ModuloAssignOp),
+        "<" to (TokenType.LesserThanOp),
+        "<=" to (TokenType.LesserOrEqualOp),
+        ">" to (TokenType.GreaterThanOp),
+        ">=" to (TokenType.GreaterOrEqualOp),
+        "=" to (TokenType.NormalAssignOp),
+        "==" to (TokenType.NormalComparisonOp),
+        "&=" to (TokenType.ReferenceAssignOp),
+        "&==" to (TokenType.ReferenceComparisonOp),
+        ":" to (TokenType.TypeSign),
+        ";" to (TokenType.EndSign),
+        "," to (TokenType.EnumerationSign),
+        "." to (TokenType.MemberReferenceSign),
+        "(" to (TokenType.LeftParenthesesSign),
+        ")" to (TokenType.RightParenthesesSign),
+        "{" to (TokenType.LeftBraceSign),
+        "}" to (TokenType.RightBraceSign),
     )
-
-    constructor(file: File, tabSize: Int = 4) : this() {
-        iterator = CodeIterator(file, tabSize)
-    }
-    constructor(sourceCode: String, tabSize: Int = 4) : this() {
-        iterator = CodeIterator(sourceCode, tabSize)
-    }
 
     private fun parseNextToken(): LexerToken? {
         if (!iterator.isEmpty()) {
@@ -208,7 +202,7 @@ class Lexer private constructor () {
             stringConstant()?.let { return it }
             comment()?.let { return it }
             operator()?.let { return it }
-            throw UnrecognizedSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber)
+            throw UnrecognizedSignError(iterator.current(), iterator.line, iterator.column)
         }
         return null
     }
@@ -230,7 +224,10 @@ class Lexer private constructor () {
             identifier.append(iterator.next())
         }
         keywordsMap[identifier.toString()].let {
-            return it ?: LexerToken(TokenType.Identifier, identifier.toString())
+            return if (it != null)
+                LexerToken(it.first, it.second, iterator.line, iterator.column - identifier.length + 1)
+            else
+                LexerToken(TokenType.Identifier, identifier.toString(), iterator.line, iterator.column - identifier.length + 1)
         }
     }
 
@@ -241,7 +238,12 @@ class Lexer private constructor () {
         var number = iterator.current() - '0'
         if (iterator.current() != '0') {
             while (iterator.peek()?.isDigit() == true) {
-                number = number * 10 + (iterator.next() - '0')
+                (number * 10 + (iterator.next() - '0')).let {
+                    if (it < number)
+                        throw TokenTooBigError(iterator.current(), iterator.line, iterator.column)
+                    else
+                        number = it
+                }
             }
         }
         return if (iterator.peek() == '.') {
@@ -249,14 +251,19 @@ class Lexer private constructor () {
             var digitCounter = 0
             iterator.next()
             if (iterator.peek()?.isDigit() != true)
-                throw MissingSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber, "number")
+                throw MissingSignError(iterator.current(), iterator.line, iterator.column, "number")
             while (iterator.peek()?.isDigit() == true) {
-                decimalPart = decimalPart * 10 + (iterator.next() - '0')
+                (decimalPart * 10 + (iterator.next() - '0')).let {
+                    if (it < decimalPart)
+                        throw TokenTooBigError(iterator.current(), iterator.line, iterator.column)
+                    else
+                        decimalPart = it
+                }
                 digitCounter++
             }
-            LexerToken(TokenType.NumConstant, number + decimalPart / 10.0.pow(digitCounter))
+            LexerToken(TokenType.NumConstant, number + decimalPart / 10.0.pow(digitCounter), iterator.line, iterator.column)
         } else
-            LexerToken(TokenType.NumConstant, number)
+            LexerToken(TokenType.NumConstant, number, iterator.line, iterator.column)
     }
 
     private fun stringConstant(): LexerToken? {
@@ -264,18 +271,20 @@ class Lexer private constructor () {
             return null
         val stringConstant = StringBuilder()
         while ((iterator.peek() ?: '"') != '"') {
+            if (stringConstant.length >= maximalSize)
+                throw TokenTooBigError(iterator.current(), iterator.line, iterator.column)
             iterator.next()
             if (iterator.current() == '\\') {
                 if (iterator.isEmpty())
-                    throw MissingSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber, "any sign")
-                iterator.next()
+                    throw MissingSignError(iterator.current(), iterator.line, iterator.column, "any sign")
+                iterator.next() // TODO in case of \n or other only n would append
             }
             stringConstant.append(iterator.current())
         }
         if (iterator.isEmpty())
-            throw MissingSignError(iterator.current(), iterator.lineNumber, iterator.columnNumber, "\"")
+            throw MissingSignError(iterator.current(), iterator.line, iterator.column, "\"")
         iterator.next()
-        return LexerToken(TokenType.StringConstant, stringConstant.toString())
+        return LexerToken(TokenType.StringConstant, stringConstant.toString(), iterator.line, iterator.column - stringConstant.length + 1)
     }
 
     private fun comment(): LexerToken? {
@@ -283,9 +292,11 @@ class Lexer private constructor () {
             return null
         val comment = StringBuilder()
         while (iterator.peek()?.equals('\n') == false) {
+            if (comment.length >= maximalSize)
+                throw TokenTooBigError(iterator.current(), iterator.line, iterator.column)
             comment.append(iterator.next())
         }
-        return LexerToken(TokenType.Comment, comment.toString())
+        return LexerToken(TokenType.Comment, comment.toString(), iterator.line, iterator.column)
     }
 
     private fun operator(): LexerToken? {
@@ -293,7 +304,7 @@ class Lexer private constructor () {
         while (!iterator.isEmpty() && operatorsMap[identifier.toString() + iterator.peek()!!] != null) {
             identifier.append(iterator.next())
         }
-        return operatorsMap[identifier.toString()]
+        return operatorsMap[identifier.toString()]?.let { LexerToken(it, null, iterator.line, iterator.column) }
     }
 
     fun next() = parseNextToken()!!

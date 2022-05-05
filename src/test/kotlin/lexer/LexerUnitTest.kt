@@ -14,19 +14,22 @@ class LexerUnitTest: FunSpec({
             "\n",
             "\r"
         ) { code ->
-            Lexer(code).isEmpty()
+            Lexer(CodeIterator(code)).isEmpty()
         }
     }
     context("StringConstant tests") {
         withData(
             nameFn = { it.first },
-            "\"test\"" to LexerToken(TokenType.StringConstant, "test"),
-            "\"ąęćśóżź\"" to LexerToken(TokenType.StringConstant, "ąęćśóżź"),
-            "\"龙,龍\"" to LexerToken(TokenType.StringConstant, "龙,龍"),
-            "\"\\\"\"" to LexerToken(TokenType.StringConstant, "\""),
-            "\"\\\\\"" to LexerToken(TokenType.StringConstant, "\\")
+            "\"test\"" to listOf(TokenType.StringConstant, "test"),
+            "\"ąęćśóżź\"" to listOf(TokenType.StringConstant, "ąęćśóżź"),
+            "\"龙,龍\"" to listOf(TokenType.StringConstant, "龙,龍"),
+            "\"\\\"\"" to listOf(TokenType.StringConstant, "\""),
+            "\"\\\\\"" to listOf(TokenType.StringConstant, "\\")
         ) { (code, token) ->
-            Lexer(code).next() shouldBe token
+            Lexer(CodeIterator(code)).next().let {
+                it.type shouldBe token[0]
+                it.value shouldBe token[1]
+            }
         }
     }
     context("invalid StringConstant tests") {
@@ -35,185 +38,206 @@ class LexerUnitTest: FunSpec({
             "\"",
             "\"invalid"
         ) { code ->
-            shouldThrowExactly<MissingSignError> { Lexer(code).next() }
+            shouldThrowExactly<MissingSignError> { Lexer(CodeIterator(code)).next() }
         }
     }
     context("NumericConstant tests") {
         withData(
             nameFn = { it.first },
-            "0" to LexerToken(TokenType.NumConstant, 0),
-            "0.365" to LexerToken(TokenType.NumConstant, 0.365),
-            "1462" to LexerToken(TokenType.NumConstant, 1462),
-            "45.23" to LexerToken(TokenType.NumConstant, 45.23)
+            "0" to listOf(TokenType.NumConstant, 0),
+            "0.365" to listOf(TokenType.NumConstant, 0.365),
+            "1462" to listOf(TokenType.NumConstant, 1462),
+            "45.23" to listOf(TokenType.NumConstant, 45.23)
         ) { (code, token) ->
-            Lexer(code).next() shouldBe token
+            Lexer(CodeIterator(code)).next().let {
+                it.type shouldBe token[0]
+                it.value shouldBe token[1]
+            }
         }
     }
-    context("BooleanConstant tests") {
+    context("invalid NumericConstant tests (TokenTooBigError)") {
         withData(
-            nameFn = { it.first },
-            "true" to LexerToken(TokenType.BoolConstant, true),
-            "false" to LexerToken(TokenType.BoolConstant, false)
-        ) { (code, token) ->
-            Lexer(code).next() shouldBe token
+            nameFn = { it },
+            "99999999999999999999999999999999",
+            "0.99999999999999999999999999999999"
+        ) { code ->
+            shouldThrowExactly<TokenTooBigError> { Lexer(CodeIterator(code)).next() }
         }
     }
-    context("invalid NumericConstant tests") {
+    context("invalid NumericConstant tests (MissingSignError)") {
         withData(
             nameFn = { it },
             "123.",
             "0."
         ) { code ->
-            shouldThrowExactly<MissingSignError> { Lexer(code).next() }
+            shouldThrowExactly<MissingSignError> { Lexer(CodeIterator(code)).next() }
+        }
+    }
+    context("BooleanConstant tests") {
+        withData(
+            nameFn = { it.first },
+            "true" to listOf(TokenType.BoolConstant, true),
+            "false" to listOf(TokenType.BoolConstant, false)
+        ) { (code, token) ->
+            Lexer(CodeIterator(code)).next().let {
+                it.type shouldBe token[0]
+                it.value shouldBe token[1]
+            }
         }
     }
     test("UnitType test") {
-        Lexer("Unit").next() shouldBe LexerToken(TokenType.UnitType)
+        Lexer(CodeIterator("Unit")).next().type shouldBe TokenType.UnitType
     }
     test("IntegerType test") {
-        Lexer("Int").next() shouldBe LexerToken(TokenType.IntType)
+        Lexer(CodeIterator("Int")).next().type shouldBe TokenType.IntType
     }
     test("FloatType test") {
-        Lexer("Float").next() shouldBe LexerToken(TokenType.FloatType)
+        Lexer(CodeIterator("Float")).next().type shouldBe TokenType.FloatType
     }
     test("NumberType test") {
-        Lexer("Number").next() shouldBe LexerToken(TokenType.NumberType)
+        Lexer(CodeIterator("Number")).next().type shouldBe TokenType.NumberType
     }
     test("StringType test") {
-        Lexer("String").next() shouldBe LexerToken(TokenType.StringType)
+        Lexer(CodeIterator("String")).next().type shouldBe TokenType.StringType
     }
     test("BooleanType test") {
-        Lexer("Bool").next() shouldBe LexerToken(TokenType.BoolType)
+        Lexer(CodeIterator("Bool")).next().type shouldBe TokenType.BoolType
     }
     test("SumOperator test") {
-        Lexer("+").next() shouldBe LexerToken(TokenType.SumOp)
+        Lexer(CodeIterator("+")).next().type shouldBe TokenType.SumOp
     }
     test("DifferenceOperator test") {
-        Lexer("-").next() shouldBe LexerToken(TokenType.DifferenceOp)
+        Lexer(CodeIterator("-")).next().type shouldBe TokenType.DifferenceOp
     }
     test("MultiplicationOperator test") {
-        Lexer("*").next() shouldBe LexerToken(TokenType.MultiplicationOp)
+        Lexer(CodeIterator("*")).next().type shouldBe TokenType.MultiplicationOp
     }
     test("ExponentOperator test") {
-        Lexer("^").next() shouldBe LexerToken(TokenType.ExponentOp)
+        Lexer(CodeIterator("^")).next().type shouldBe TokenType.ExponentOp
     }
     test("DivisionOperator test") {
-        Lexer("/").next() shouldBe LexerToken(TokenType.DivisionOp)
+        Lexer(CodeIterator("/")).next().type shouldBe TokenType.DivisionOp
     }
     test("RootOperator test") {
-        Lexer("|").next() shouldBe LexerToken(TokenType.RootOp)
+        Lexer(CodeIterator("|")).next().type shouldBe TokenType.RootOp
     }
     test("ModuloOperator test") {
-        Lexer("%").next() shouldBe LexerToken(TokenType.ModuloOp)
+        Lexer(CodeIterator("%")).next().type shouldBe TokenType.ModuloOp
     }
     test("NotOperator test") {
-        Lexer("not").next() shouldBe LexerToken(TokenType.NotOp)
+        Lexer(CodeIterator("not")).next().type shouldBe TokenType.NotOp
     }
     test("AndOperator test") {
-        Lexer("and").next() shouldBe LexerToken(TokenType.AndOp)
+        Lexer(CodeIterator("and")).next().type shouldBe TokenType.AndOp
     }
     test("OrOperator test") {
-        Lexer("or").next() shouldBe LexerToken(TokenType.OrOp)
+        Lexer(CodeIterator("or")).next().type shouldBe TokenType.OrOp
     }
     test("IsOperator test") {
-        Lexer("is").next() shouldBe LexerToken(TokenType.IsOp)
+        Lexer(CodeIterator("is")).next().type shouldBe TokenType.IsOp
     }
     test("CastOperator test") {
-        Lexer("as").next() shouldBe LexerToken(TokenType.CastOp)
+        Lexer(CodeIterator("as")).next().type shouldBe TokenType.CastOp
     }
     test("NormalAssignmentOperator test") {
-        Lexer("=").next() shouldBe LexerToken(TokenType.NormalAssignOp)
+        Lexer(CodeIterator("=")).next().type shouldBe TokenType.NormalAssignOp
     }
     test("ReferenceAssignmentOperator test") {
-        Lexer("&=").next() shouldBe LexerToken(TokenType.ReferenceAssignOp)
+        Lexer(CodeIterator("&=")).next().type shouldBe TokenType.ReferenceAssignOp
     }
     test("SumAssignmentOperator test") {
-        Lexer("+=").next() shouldBe LexerToken(TokenType.SumAssignOp)
+        Lexer(CodeIterator("+=")).next().type shouldBe TokenType.SumAssignOp
     }
     test("DifferenceAssignmentOperator test") {
-        Lexer("-=").next() shouldBe LexerToken(TokenType.DifferenceAssignOp)
+        Lexer(CodeIterator("-=")).next().type shouldBe TokenType.DifferenceAssignOp
     }
     test("MultiplicationAssignmentOperator test") {
-        Lexer("*=").next() shouldBe LexerToken(TokenType.MultiplicationAssignOp)
+        Lexer(CodeIterator("*=")).next().type shouldBe TokenType.MultiplicationAssignOp
     }
     test("ExponentAssignmentOperator test") {
-        Lexer("^=").next() shouldBe LexerToken(TokenType.ExponentAssignOp)
+        Lexer(CodeIterator("^=")).next().type shouldBe TokenType.ExponentAssignOp
     }
     test("DivisionAssignmentOperator test") {
-        Lexer("/=").next() shouldBe LexerToken(TokenType.DivisionAssignOp)
+        Lexer(CodeIterator("/=")).next().type shouldBe TokenType.DivisionAssignOp
     }
     test("RootAssignmentOperator test") {
-        Lexer("|=").next() shouldBe LexerToken(TokenType.RootAssignOp)
+        Lexer(CodeIterator("|=")).next().type shouldBe TokenType.RootAssignOp
     }
     test("ModuloAssignmentOperator test") {
-        Lexer("%=").next() shouldBe LexerToken(TokenType.ModuloAssignOp)
+        Lexer(CodeIterator("%=")).next().type shouldBe TokenType.ModuloAssignOp
     }
     test("NormalComparisonOperator test") {
-        Lexer("==").next() shouldBe LexerToken(TokenType.NormalComparisonOp)
+        Lexer(CodeIterator("==")).next().type shouldBe TokenType.NormalComparisonOp
     }
     test("ReferenceComparisonOperator test") {
-        Lexer("&==").next() shouldBe LexerToken(TokenType.ReferenceComparisonOp)
+        Lexer(CodeIterator("&==")).next().type shouldBe TokenType.ReferenceComparisonOp
     }
     test("LesserThanOperator test") {
-        Lexer("<").next() shouldBe LexerToken(TokenType.LesserThanOp)
+        Lexer(CodeIterator("<")).next().type shouldBe TokenType.LesserThanOp
     }
     test("LesserOrEqualThanOperator test") {
-        Lexer("<=").next() shouldBe LexerToken(TokenType.LesserOrEqualOp)
+        Lexer(CodeIterator("<=")).next().type shouldBe TokenType.LesserOrEqualOp
     }
     test("GreaterThanOperator test") {
-        Lexer(">").next() shouldBe LexerToken(TokenType.GreaterThanOp)
+        Lexer(CodeIterator(">")).next().type shouldBe TokenType.GreaterThanOp
     }
     test("TypeSign test") {
-        Lexer(":").next() shouldBe LexerToken(TokenType.TypeSign)
+        Lexer(CodeIterator(":")).next().type shouldBe TokenType.TypeSign
     }
     test("EndOfLineSign test") {
-        Lexer(";").next() shouldBe LexerToken(TokenType.EndSign)
+        Lexer(CodeIterator(";")).next().type shouldBe TokenType.EndSign
     }
     test("ArgumentEnumerationSign test") {
-        Lexer(",").next() shouldBe LexerToken(TokenType.EnumerationSign)
+        Lexer(CodeIterator(",")).next().type shouldBe TokenType.EnumerationSign
     }
     test("MemberReferenceSign test") {
-        Lexer(".").next() shouldBe LexerToken(TokenType.MemberReferenceSign)
+        Lexer(CodeIterator(".")).next().type shouldBe TokenType.MemberReferenceSign
     }
     test("VariableKeyword test") {
-        Lexer("var").next() shouldBe LexerToken(TokenType.Variable)
+        Lexer(CodeIterator("var")).next().type shouldBe TokenType.Variable
     }
     test("IfKeyword test") {
-        Lexer("if").next() shouldBe LexerToken(TokenType.If)
+        Lexer(CodeIterator("if")).next().type shouldBe TokenType.If
     }
     test("ElseKeyword test") {
-        Lexer("else").next() shouldBe LexerToken(TokenType.Else)
+        Lexer(CodeIterator("else")).next().type shouldBe TokenType.Else
     }
     test("WhileKeyword test") {
-        Lexer("while").next() shouldBe LexerToken(TokenType.While)
+        Lexer(CodeIterator("while")).next().type shouldBe TokenType.While
     }
     test("ReturnKeyword test") {
-        Lexer("return").next() shouldBe LexerToken(TokenType.Return)
+        Lexer(CodeIterator("return")).next().type shouldBe TokenType.Return
     }
     context("Identifier tests") {
         withData(
             nameFn = { it.first },
-            "identifier" to LexerToken(TokenType.Identifier, "identifier"),
-            "f" to LexerToken(TokenType.Identifier, "f"),
-            "fals" to LexerToken(TokenType.Identifier, "fals"),
-            "isEmpty" to LexerToken(TokenType.Identifier, "isEmpty"),
-            "andorvar" to LexerToken(TokenType.Identifier, "andorvar"),
-            "ąęćśóżž" to LexerToken(TokenType.Identifier, "ąęćśóżž"),
-            "_龙龍" to LexerToken(TokenType.Identifier, "_龙龍"),
+            "identifier" to listOf(TokenType.Identifier, "identifier"),
+            "f" to listOf(TokenType.Identifier, "f"),
+            "fals" to listOf(TokenType.Identifier, "fals"),
+            "isEmpty" to listOf(TokenType.Identifier, "isEmpty"),
+            "andorvar" to listOf(TokenType.Identifier, "andorvar"),
+            "ąęćśóżž" to listOf(TokenType.Identifier, "ąęćśóżž"),
+            "_龙龍" to listOf(TokenType.Identifier, "_龙龍"),
         ) { (code, token) ->
-            Lexer(code).next() shouldBe token
+            Lexer(CodeIterator(code)).next().let {
+                it.type shouldBe token[0]
+                it.value shouldBe token[1]
+            }
         }
     }
     context("Comment tests") {
         withData(
             nameFn = { it.first },
-            "#" to LexerToken(TokenType.Comment, ""),
-            "# " to LexerToken(TokenType.Comment, " "),
-            "# \"" to LexerToken(TokenType.Comment, " \""),
-            "# some comment \n" to LexerToken(TokenType.Comment, " some comment "),
-            "# var x: Int\nvar x: Int" to LexerToken(TokenType.Comment, " var x: Int")
+            "#" to listOf(TokenType.Comment, ""),
+            "# " to listOf(TokenType.Comment, " "),
+            "# \"" to listOf(TokenType.Comment, " \""),
+            "# some comment \n" to listOf(TokenType.Comment, " some comment "),
+            "# var x: Int\nvar x: Int" to listOf(TokenType.Comment, " var x: Int")
         ) { (code, token) ->
-            Lexer(code).next() shouldBe token
+            Lexer(CodeIterator(code)).next().let {
+                it.type shouldBe token[0]
+                it.value shouldBe token[1]
+            }
         }
     }
     context("invalid signs tests") {
@@ -223,7 +247,7 @@ class LexerUnitTest: FunSpec({
             "$",
             "'"
         ) { code ->
-            shouldThrowExactly<UnrecognizedSignError> { Lexer(code).next() }
+            shouldThrowExactly<UnrecognizedSignError> { Lexer(CodeIterator(code)).next() }
         }
     }
     context("sourceCode line and column tests") {
@@ -235,7 +259,7 @@ class LexerUnitTest: FunSpec({
             "\n\"" to (2 to 1),
             "\n  \"" to (2 to 3),
         ) { (code, place) ->
-            try { Lexer(code).next() } catch (e: MissingSignError) { e.message shouldBe "expected a \" after token: \" found at ${place.first}:${place.second}" }
+            try { Lexer(CodeIterator(code)).next() } catch (e: MissingSignError) { e.message shouldBe "expected a \" after token: \" found at ${place.first}:${place.second}" }
         }
     }
 })
