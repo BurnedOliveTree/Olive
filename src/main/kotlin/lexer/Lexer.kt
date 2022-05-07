@@ -269,7 +269,6 @@ class Lexer (
         if (iterator.current() != '"')
             return null
         val stringConstant = StringBuilder()
-        println(("\\"+"n").length)
         while ((iterator.peek() ?: '"') != '"') {
             if (stringConstant.length >= maximalSize)
                 throw TokenTooBigError(iterator.current(), iterator.line, iterator.column)
