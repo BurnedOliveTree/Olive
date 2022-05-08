@@ -70,11 +70,11 @@ WhiteSpace:         [ \t\r\n]+ -> skip; // skip whitespaces
 /// rules
 
 arguments:          (expression (EnumerationSign expression)*)?;
-idOrfunctionCall:   Identifier ('(' arguments ')')? (MemberOfSign Identifier '(' arguments ')')*;
+restOfFunCall:      '(' arguments ')' (MemberOfSign Identifier '(' arguments ')')*;
 
-expressionPiece:    idOrfunctionCall | Constant | ('(' expression ')');
+expressionPiece:    (Identifier restOfFunCall?) | Constant | ('(' expression ')');
 castExpression:     expressionPiece (CastOp Type)?;
-exponentExpression: castExpression ((ExponentOp | RootOp) castExpression)*; // remember that this is right-handed first
+exponentExpression: castExpression ((ExponentOp | RootOp) castExpression)*;
 inverseExpression:  DifferenceOp? exponentExpression;
 multiplyExpression: inverseExpression ((MultiplicationOp | DifferenceOp | ModuloOp) inverseExpression)*;
 addExpression:      multiplyExpression ((SumOp | DifferenceOp) multiplyExpression)*;
@@ -86,12 +86,13 @@ andExpression:      equalExpression (AndOp equalExpression)*;
 orExpression:       andExpression (OrOp andExpression)*;
 expression:         orExpression;
 
-statement:          ((Identifier AssignOp) | Return)? expression EndSign;
-block:              '{' (statement | varDeclaration | ifStatement | whileStatement)* '}';
+block:              '{' (idStartedStatement | varDeclaration | ifStatement | whileStatement | returnStatement)* '}';
 parameters:         (typedIdentifier (EnumerationSign typedIdentifier)*)?;
 
 typedIdentifier:    Identifier TypeSign Type;
-varDeclaration:     Variable typedIdentifier ((NormalAssignOp statement) | EndSign);
+idStartedStatement: Identifier (restOfFunCall | (AssignOp expression)) EndSign;
+returnStatement:    Return expression EndSign;
+varDeclaration:     Variable typedIdentifier (NormalAssignOp expression)? EndSign;
 elseStatement:      Else block;
 ifStatement:        If '(' expression ')' block elseStatement?;
 whileStatement:     While '(' expression ')' block;
