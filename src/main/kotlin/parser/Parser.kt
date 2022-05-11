@@ -13,16 +13,11 @@ class LexerIterator(private val lexer: Lexer) {
         current = lexer.next()
         return current
     }
-    fun isEmpty() = lexer.isEmpty() // TODO use
 }
 
 class Parser(private val iterator: LexerIterator) {
     // Parser RD
-    // Parser tworzy drzewo wyprowadzenia dla zdania lub informuje o błędzie
-    // Parser buduje strukture obiektów wykorzystywaną w interpretacji
     // typy parserów: zstępujący (w4, 3h), wstępujący (w5, 3h)
-    // na wyjściu parsera nie ma być nawiasów
-    // na wyjściu nie ma być tokenów, tym bardziej tych z Lexera - spytać czym to ma być w takim razie
     // skonsultować szkielet
     // testy jednostkowe wykorzystujące sekwencje tokenów (czyli konstruktor z sekwencją tokenów)
     // testy integracyjne dopiero ma działać z Lexerem

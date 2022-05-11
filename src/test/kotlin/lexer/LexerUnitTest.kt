@@ -44,10 +44,10 @@ class LexerUnitTest: FunSpec({
     context("NumericConstant tests") {
         withData(
             nameFn = { it.first },
-            "0" to listOf(TokenType.NumConstant, 0),
-            "0.365" to listOf(TokenType.NumConstant, 0.365),
-            "1462" to listOf(TokenType.NumConstant, 1462),
-            "45.23" to listOf(TokenType.NumConstant, 45.23)
+            "0" to listOf(TokenType.IntConstant, 0),
+            "0.365" to listOf(TokenType.FloatConstant, 0.365),
+            "1462" to listOf(TokenType.IntConstant, 1462),
+            "45.23" to listOf(TokenType.FloatConstant, 45.23)
         ) { (code, token) ->
             Lexer(CodeIterator(code)).next().let {
                 it.type shouldBe token[0]

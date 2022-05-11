@@ -64,7 +64,9 @@ enum class TokenType {
     Return,
 
     Identifier,
-    Comment;
+    Comment,
+
+    End;
 
     fun isConstant(): Boolean =
         this in listOf(BoolConstant, FloatConstant, IntConstant, StringConstant)
@@ -310,7 +312,7 @@ class Lexer (
         return operatorsMap[identifier.toString()]?.let { LexerToken(it, null, iterator.line, iterator.column) }
     }
 
-    fun next() = parseNextToken()!!
+    fun next() = parseNextToken() ?: LexerToken(TokenType.End, null, -1, -1)
 
     fun isEmpty() = iterator.isEmpty()
 }
