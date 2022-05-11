@@ -5,17 +5,32 @@ import lexer.LexerToken
 import lexer.TokenType
 import java.util.*
 
-class LexerIterator(private val lexer: Lexer) {
+abstract class BaseLexerIterator {
+    abstract fun current(): LexerToken
+    abstract fun next(): LexerToken
+}
+
+class LexerIterator(private val lexer: Lexer): BaseLexerIterator() {
     private var current = lexer.next()
     
-    fun current() = current
-    fun next(): LexerToken {
+    override fun current() = current
+    override fun next(): LexerToken {
         current = lexer.next()
         return current
     }
 }
 
-class Parser(private val iterator: LexerIterator) {
+class LexerTokenIterator(private val iterable: Iterable<LexerToken>): BaseLexerIterator() {
+    private var current = iterable.first()
+
+    override fun current() = current
+    override fun next(): LexerToken {
+        current = iterable.first()
+        return current
+    }
+}
+
+class Parser(private val iterator: BaseLexerIterator) {
     // Parser RD
     // typy parserów: zstępujący (w4, 3h), wstępujący (w5, 3h)
     // skonsultować szkielet
@@ -229,7 +244,7 @@ class Parser(private val iterator: LexerIterator) {
             }
             val assign = assignmentMap[operator] ?: throw IllegalStateException()
             expression = assign(Variable(name), expression)
-            AssignmentStatement(name, expression)
+            AssignmentStatement(Variable(name), expression)
         } else {
             FunctionCallStatement(functionCallExpression)
         }

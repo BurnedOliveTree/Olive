@@ -58,9 +58,9 @@ data class VarDeclarationStatement(val name: String, val type: Any, val value: E
 
 data class IfStatement(val condition: Expression, val ifBlock: Array<Statement>, val elseBlock: Array<Statement>?): Statement()
 
-data class WhileStatement(val condition: Expression, val ifBlock: Array<Statement>): Statement()
+data class WhileStatement(val condition: Expression, val whileBlock: Array<Statement>): Statement()
 
-data class AssignmentStatement(val variable: String, val expression: Expression): Statement()
+data class AssignmentStatement(val variable: Variable, val expression: Expression): Statement()
 
 data class FunctionCallStatement(val expression: FunctionCallExpression): Statement()
 
