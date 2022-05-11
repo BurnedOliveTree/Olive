@@ -45,7 +45,7 @@ data class CastExpression(val expression: Expression, val type: Any): Expression
 
 data class Variable(val name: String): Expression()
 data class BoolConstant(val value: Boolean): Expression()
-data class FloatConstant(val value: Float): Expression()
+data class FloatConstant(val value: Double): Expression()
 data class IntConstant(val value: Int): Expression()
 data class StringConstant(val value: String): Expression()
 

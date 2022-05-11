@@ -3,7 +3,8 @@ grammar felis;
 /// constants
 
 StringConstant:     '"' ('\\' | ~[\\"]) '"';
-NumConstant:        (([1-9] [0-9]*) | [0]) ('.' [0-9]+)?;
+IntConstant:        (([1-9] [0-9]*) | [0]);
+FloatConstant:      (([1-9] [0-9]*) | [0]) '.' [0-9]+;
 BoolConstant:       'true' | 'false';
 
 /// keywords and operators
@@ -61,7 +62,7 @@ Return:             'return';
 /// token groups
 
 Identifier:         [A-Za-z_]+; // to be changed to a library function isLetter()
-Constant:           StringConstant | NumConstant | BoolConstant;
+Constant:           StringConstant | IntConstant | FloatConstant | BoolConstant;
 Type:               UnitType | IntType | FloatType | NumberType | StringType | BoolType;
 AssignOp:           NormalAssignOp | ReferenceAssignOp | SumAssignOp | DifferenceAssingOp | MultiplicationAssingOp | ExponentAssignOp | DivisionAssignOp | RootAssignOp | ModuloAssignOp;
 Comment:            CommentSign ~('\n')* '\n'; // line comment

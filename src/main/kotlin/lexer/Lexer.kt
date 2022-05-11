@@ -5,7 +5,8 @@ import kotlin.math.pow
 
 enum class TokenType {
     StringConstant,
-    NumConstant,
+    IntConstant,
+    FloatConstant,
     BoolConstant,
 
     UnitType,
@@ -66,7 +67,7 @@ enum class TokenType {
     Comment;
 
     fun isConstant(): Boolean =
-        this in listOf(BoolConstant, NumConstant, StringConstant)
+        this in listOf(BoolConstant, FloatConstant, IntConstant, StringConstant)
 
     fun isType(): Boolean =
         this in listOf(UnitType, IntType, FloatType, NumberType, StringType, BoolType)
@@ -260,9 +261,9 @@ class Lexer (
                 }
                 digitCounter++
             }
-            LexerToken(TokenType.NumConstant, number + decimalPart / 10.0.pow(digitCounter), iterator.line, iterator.column)
+            LexerToken(TokenType.FloatConstant, number + decimalPart / 10.0.pow(digitCounter), iterator.line, iterator.column)
         } else
-            LexerToken(TokenType.NumConstant, number, iterator.line, iterator.column)
+            LexerToken(TokenType.IntConstant, number, iterator.line, iterator.column)
     }
 
     private fun stringConstant(): LexerToken? {

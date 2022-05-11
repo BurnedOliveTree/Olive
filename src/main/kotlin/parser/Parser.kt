@@ -1,6 +1,7 @@
 package parser
 
 import lexer.Lexer
+import lexer.LexerToken
 import lexer.TokenType
 import java.util.*
 
@@ -8,7 +9,10 @@ class LexerIterator(private val lexer: Lexer) {
     private var current = lexer.next()
     
     fun current() = current
-    fun next() = lexer.next()
+    fun next(): LexerToken {
+        current = lexer.next()
+        return current
+    }
     fun isEmpty() = lexer.isEmpty() // TODO use
 }
 
@@ -428,18 +432,17 @@ class Parser(private val iterator: LexerIterator) {
     private fun parseExpressionPiece(): Expression? {
         if (isTokenType(TokenType.Identifier)) {
             val name = iterator.current().value as String
+            iterator.next()
             return parseRestOfFunctionCall(name) ?: Variable(name)
         } else if (iterator.current().type.isConstant()) {
             val constant = when (iterator.current().type) {
                 TokenType.BoolConstant -> BoolConstant(iterator.current().value as Boolean)
-                TokenType.NumConstant -> when (iterator.current().value) {
-                        is Int -> IntConstant(iterator.current().value as Int)
-                        is Float -> FloatConstant(iterator.current().value as Float)
-                        else -> throw IllegalStateException()
-                    }
+                TokenType.FloatConstant -> FloatConstant(iterator.current().value as Double)
+                TokenType.IntConstant -> IntConstant(iterator.current().value as Int)
                 TokenType.StringConstant -> StringConstant(iterator.current().value as String)
                 else -> throw IllegalStateException()
             }
+            iterator.next()
             return constant
         } else if (isTokenTypeThenConsume(TokenType.LeftParenthesesSign)) {
             val expression = parseExpression().let {
