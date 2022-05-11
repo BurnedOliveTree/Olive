@@ -1,5 +1,7 @@
 import lexer.CodeIterator
 import lexer.Lexer
+import parser.LexerIterator
+import parser.Parser
 import java.io.FileReader
 
 fun main(args: Array<String>) {
@@ -8,9 +10,7 @@ fun main(args: Array<String>) {
 
     FileReader(args[0]).use {
         val lexer = Lexer(CodeIterator(it))
-
-        while (!lexer.isEmpty()) {
-            println(lexer.next())
-        }
+        val parser = Parser(LexerIterator(lexer))
+        println(parser.parse())
     }
 }

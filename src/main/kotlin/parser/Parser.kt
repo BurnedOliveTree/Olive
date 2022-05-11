@@ -32,6 +32,17 @@ class Parser(private val iterator: LexerIterator) {
         TokenType.StringType to String,
         TokenType.BoolType to Boolean,
     )
+    private val assignmentMap = mapOf(
+        TokenType.NormalAssignOp to { _: Expression, right: Expression -> right },
+        // TODO ReferenceAssignOp
+        TokenType.SumAssignOp to { left: Expression, right: Expression -> AddExpression(left, right) },
+        TokenType.DifferenceAssignOp to { left: Expression, right: Expression -> SubtractExpression(left, right) },
+        TokenType.MultiplicationAssignOp to { left: Expression, right: Expression -> MultiplyExpression(left, right) },
+        TokenType.DivisionAssignOp to { left: Expression, right: Expression -> DivideExpression(left, right) },
+        TokenType.ModuloAssignOp to { left: Expression, right: Expression -> ModuloExpression(left, right) },
+        TokenType.ExponentAssignOp to { left: Expression, right: Expression -> ExponentExpression(left, right) },
+        TokenType.RootAssignOp to { left: Expression, right: Expression -> RootExpression(left, right) },
+    )
 
     private fun isTokenType(tokenType: TokenType) = iterator.current().type == tokenType
     private fun isTokenType(tokenTypes: List<TokenType>) = iterator.current().type in tokenTypes
@@ -62,7 +73,7 @@ class Parser(private val iterator: LexerIterator) {
         while (parseFunDeclaration()) { }
         if (functions.isEmpty())
             throw ExpectedOtherTokenException(iterator.current(), this::parse.name, "funDeclaration")
-        // throw if there are tokens left
+        // TODO throw if there are tokens left
         return Program(functions.toTypedArray())
     }
 
@@ -207,10 +218,15 @@ class Parser(private val iterator: LexerIterator) {
 
         val functionCallExpression = parseRestOfFunctionCall(name)
         val statement = if (functionCallExpression == null) {
-            ifTokenTypeThenConsumeElseThrow(TokenType.AssignOp, this::parseIdentifierStartedStatement.name)
-            val expression = parseExpression().let {
+            if (!iterator.current().type.isAssignOp())
+                throw ExpectedOtherTokenException(iterator.current(), this::parseIdentifierStartedStatement.name, "assignOperator")
+            val operator = iterator.current().type
+            iterator.next()
+            var expression = parseExpression().let {
                 it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseIdentifierStartedStatement.name, "expression")
             }
+            val assign = assignmentMap[operator] ?: throw IllegalStateException()
+            expression = assign(Variable(name), expression)
             AssignmentStatement(name, expression)
         } else {
             FunctionCallStatement(functionCallExpression)
@@ -376,6 +392,22 @@ class Parser(private val iterator: LexerIterator) {
     // castExpression ((ExponentOp | RootOp) castExpression)*;
     private fun parseExponentExpression(): Expression? {
         // TODO remember that this is right-handed first
+        var left = parseCastExpression().let {
+            it ?: return null
+        }
+        while (isTokenType(listOf(TokenType.ExponentOp, TokenType.RootOp))) {
+            val operation = iterator.current().type
+            iterator.next()
+            val right = parseCastExpression().let {
+                it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseExponentExpression.name, "expression")
+            }
+            left = when (operation) {
+                TokenType.ExponentOp -> ExponentExpression(left, right)
+                TokenType.RootOp -> RootExpression(left, right)
+                else -> throw IllegalStateException()
+            }
+        }
+        return left
     }
 
     // expressionPiece (CastOp Type)?;
@@ -397,9 +429,18 @@ class Parser(private val iterator: LexerIterator) {
         if (isTokenType(TokenType.Identifier)) {
             val name = iterator.current().value as String
             return parseRestOfFunctionCall(name) ?: Variable(name)
-        } else if (isTokenType(listOf(TokenType.StringConstant, TokenType.NumConstant, TokenType.BoolConstant))) {
-            // TODO Constant
-            return
+        } else if (iterator.current().type.isConstant()) {
+            val constant = when (iterator.current().type) {
+                TokenType.BoolConstant -> BoolConstant(iterator.current().value as Boolean)
+                TokenType.NumConstant -> when (iterator.current().value) {
+                        is Int -> IntConstant(iterator.current().value as Int)
+                        is Float -> FloatConstant(iterator.current().value as Float)
+                        else -> throw IllegalStateException()
+                    }
+                TokenType.StringConstant -> StringConstant(iterator.current().value as String)
+                else -> throw IllegalStateException()
+            }
+            return constant
         } else if (isTokenTypeThenConsume(TokenType.LeftParenthesesSign)) {
             val expression = parseExpression().let {
                 it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseExpressionPiece.name, "expression")
