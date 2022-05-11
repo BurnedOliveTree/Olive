@@ -22,7 +22,6 @@ class Parser(private val iterator: LexerIterator) {
     // testy jednostkowe wykorzystujące sekwencje tokenów (czyli konstruktor z sekwencją tokenów)
     // testy integracyjne dopiero ma działać z Lexerem
 
-    private val functions: Vector<Function> = Vector()
     private val typeMap = mapOf(
         TokenType.UnitType to Unit,
         TokenType.IntType to Int,
@@ -33,7 +32,7 @@ class Parser(private val iterator: LexerIterator) {
     )
     private val assignmentMap = mapOf(
         TokenType.NormalAssignOp to { _: Expression, right: Expression -> right },
-        // TODO ReferenceAssignOp
+        TokenType.ReferenceAssignOp to { _: Expression, right: Expression -> Reference(right) },
         TokenType.SumAssignOp to { left: Expression, right: Expression -> AddExpression(left, right) },
         TokenType.DifferenceAssignOp to { left: Expression, right: Expression -> SubtractExpression(left, right) },
         TokenType.MultiplicationAssignOp to { left: Expression, right: Expression -> MultiplyExpression(left, right) },
@@ -69,17 +68,22 @@ class Parser(private val iterator: LexerIterator) {
 
     // funDeclaration+;
     fun parse(): Program {
-        while (parseFunDeclaration()) { }
-        if (functions.isEmpty())
+        val functions: Vector<Function> = Vector()
+        var function: Function? = parseFunDeclaration()
+            ?: throw ExpectedOtherTokenException(iterator.current(), this::parse.name, "funDeclaration")
+        while (function != null) {
+            functions.add(function)
+            function = parseFunDeclaration()
+        }
+        if (iterator.next().type != TokenType.End)
             throw ExpectedOtherTokenException(iterator.current(), this::parse.name, "funDeclaration")
-        // TODO throw if there are tokens left
         return Program(functions.toTypedArray())
     }
 
     // Identifier '(' parameters ')' TypeSign Type block;
-    private fun parseFunDeclaration(): Boolean {
+    private fun parseFunDeclaration(): Function? {
         if (!isTokenType(TokenType.Identifier))
-            return false
+            return null
         val name = iterator.current().value as String
         iterator.next()
 
@@ -96,8 +100,7 @@ class Parser(private val iterator: LexerIterator) {
             it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseFunDeclaration.name, "block")
         }
 
-        functions.add(Function(name, type, parameters, block))
-        return true
+        return Function(name, type, parameters, block)
     }
 
     // (typedIdentifier (EnumerationSign typedIdentifier)*)?;

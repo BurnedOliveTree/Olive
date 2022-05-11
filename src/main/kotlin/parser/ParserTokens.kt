@@ -43,6 +43,7 @@ data class RootExpression(val left: Expression, val right: Expression): Expressi
 
 data class CastExpression(val expression: Expression, val type: Any): Expression()
 
+data class Reference(val variable: Expression): Expression()
 data class Variable(val name: String): Expression()
 data class BoolConstant(val value: Boolean): Expression()
 data class FloatConstant(val value: Double): Expression()
