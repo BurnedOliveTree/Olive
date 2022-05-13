@@ -32,10 +32,6 @@ class LexerTokenIterator(private val iterable: Iterable<LexerToken>): BaseLexerI
 
 class Parser(private val iterator: BaseLexerIterator) {
     // Parser RD
-    // typy parserów: zstępujący (w4, 3h), wstępujący (w5, 3h)
-    // skonsultować szkielet
-    // testy jednostkowe wykorzystujące sekwencje tokenów (czyli konstruktor z sekwencją tokenów)
-    // testy integracyjne dopiero ma działać z Lexerem
 
     private val typeMap = mapOf(
         TokenType.UnitType to Unit,
@@ -44,17 +40,6 @@ class Parser(private val iterator: BaseLexerIterator) {
         TokenType.NumberType to Number,
         TokenType.StringType to String,
         TokenType.BoolType to Boolean,
-    )
-    private val assignmentMap = mapOf(
-        TokenType.NormalAssignOp to { _: Expression, right: Expression -> right },
-        TokenType.ReferenceAssignOp to { _: Expression, right: Expression -> Reference(right) },
-        TokenType.SumAssignOp to { left: Expression, right: Expression -> AddExpression(left, right) },
-        TokenType.DifferenceAssignOp to { left: Expression, right: Expression -> SubtractExpression(left, right) },
-        TokenType.MultiplicationAssignOp to { left: Expression, right: Expression -> MultiplyExpression(left, right) },
-        TokenType.DivisionAssignOp to { left: Expression, right: Expression -> DivideExpression(left, right) },
-        TokenType.ModuloAssignOp to { left: Expression, right: Expression -> ModuloExpression(left, right) },
-        TokenType.ExponentAssignOp to { left: Expression, right: Expression -> ExponentExpression(left, right) },
-        TokenType.RootAssignOp to { left: Expression, right: Expression -> RootExpression(left, right) },
     )
 
     private fun isTokenType(tokenType: TokenType) = iterator.current().type == tokenType
@@ -91,7 +76,7 @@ class Parser(private val iterator: BaseLexerIterator) {
             function = parseFunDeclaration()
         }
         if (iterator.next().type != TokenType.End)
-            throw ExpectedOtherTokenException(iterator.current(), this::parse.name, "funDeclaration")
+            throw ExpectedOtherTokenException(iterator.current(), this::parse.name, "endOfText")
         return Program(functions.toTypedArray())
     }
 
@@ -147,7 +132,7 @@ class Parser(private val iterator: BaseLexerIterator) {
         return TypedIdentifier(name, type)
     }
 
-    // '{' (statement | varDeclaration | ifStatement | whileStatement | assignStatement | returnStatement)* '}';
+    // '{' (idStartedStatement | varDeclaration | ifStatement | whileStatement | returnStatement)* '}';
     private fun parseBlock(): Array<Statement>? {
         if (!isTokenTypeThenConsume(TokenType.LeftBraceSign))
             return null
@@ -235,21 +220,36 @@ class Parser(private val iterator: BaseLexerIterator) {
 
         val functionCallExpression = parseRestOfFunctionCall(name)
         val statement = if (functionCallExpression == null) {
-            if (!iterator.current().type.isAssignOp())
-                throw ExpectedOtherTokenException(iterator.current(), this::parseIdentifierStartedStatement.name, "assignOperator")
-            val operator = iterator.current().type
-            iterator.next()
-            var expression = parseExpression().let {
-                it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseIdentifierStartedStatement.name, "expression")
+            parseRestOfAssignmentStatement(name).let {
+                it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseIdentifierStartedStatement.name, "assignOperator")
             }
-            val assign = assignmentMap[operator] ?: throw IllegalStateException()
-            expression = assign(Variable(name), expression)
-            AssignmentStatement(Variable(name), expression)
         } else {
             FunctionCallStatement(functionCallExpression)
         }
         ifTokenTypeThenConsumeElseThrow(TokenType.EndSign, this::parseIdentifierStartedStatement.name)
         return statement
+    }
+
+    private fun parseRestOfAssignmentStatement(name: String): Statement? {
+        if (!iterator.current().type.isAssignOp())
+            return null
+        val operator = iterator.current().type
+        iterator.next()
+        val expression = parseExpression().let {
+            it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseIdentifierStartedStatement.name, "expression")
+        }
+        return when (operator) {
+            TokenType.NormalAssignOp -> NormalAssignmentStatement(Variable(name), expression)
+            TokenType.ReferenceAssignOp -> ReferenceAssignmentStatement(Variable(name), expression)
+            TokenType.SumAssignOp -> SumAssignmentStatement(Variable(name), expression)
+            TokenType.DifferenceAssignOp -> DifferenceAssignmentStatement(Variable(name), expression)
+            TokenType.MultiplicationAssignOp -> MultiplicationAssignmentStatement(Variable(name), expression)
+            TokenType.DivisionAssignOp -> DivisionAssignmentStatement(Variable(name), expression)
+            TokenType.ModuloAssignOp -> ModuloAssignmentStatement(Variable(name), expression)
+            TokenType.ExponentAssignOp -> ExponentAssignmentStatement(Variable(name), expression)
+            TokenType.RootAssignOp -> RootAssignmentStatement(Variable(name), expression)
+            else -> throw IllegalStateException()
+        }
     }
 
     // Return expression EndSign;
@@ -318,7 +318,9 @@ class Parser(private val iterator: BaseLexerIterator) {
     // NotOp? typeCheckExpression;
     private fun parseNotExpression(): Expression? {
         if (isTokenTypeThenConsume(TokenType.NotOp)) {
-            return NotExpression(parseTypeCheckExpression().let { it ?: return null })
+            return NotExpression(parseTypeCheckExpression().let {
+                it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseNotExpression.name, "expression")
+            })
         }
         return parseTypeCheckExpression()
     }
@@ -401,21 +403,22 @@ class Parser(private val iterator: BaseLexerIterator) {
     // DifferenceOp? exponentExpression;
     private fun parseInverseExpression(): Expression? {
         if (isTokenTypeThenConsume(TokenType.DifferenceOp)) {
-            return InverseExpression(parseExponentExpression().let { it ?: return null })
+            return InverseExpression(parseExponentExpression().let {
+                it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseInverseExpression.name, "expression")
+            })
         }
         return parseExponentExpression()
     }
 
-    // castExpression ((ExponentOp | RootOp) castExpression)*;
+    // castExpression ((ExponentOp | RootOp) exponentExpression)*;
     private fun parseExponentExpression(): Expression? {
-        // TODO remember that this is right-handed first
         var left = parseCastExpression().let {
             it ?: return null
         }
-        while (isTokenType(listOf(TokenType.ExponentOp, TokenType.RootOp))) {
+        if (isTokenType(listOf(TokenType.ExponentOp, TokenType.RootOp))) {
             val operation = iterator.current().type
             iterator.next()
-            val right = parseCastExpression().let {
+            val right = parseExponentExpression().let {
                 it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseExponentExpression.name, "expression")
             }
             left = when (operation) {

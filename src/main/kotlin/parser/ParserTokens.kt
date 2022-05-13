@@ -1,6 +1,7 @@
 package parser
 
 abstract class Visitable
+// TODO add print method to print the parser tree
 
 sealed class Number {
     class Int(val value: Int) : Number()
@@ -60,7 +61,15 @@ data class IfStatement(val condition: Expression, val ifBlock: Array<Statement>,
 
 data class WhileStatement(val condition: Expression, val whileBlock: Array<Statement>): Statement()
 
-data class AssignmentStatement(val variable: Variable, val expression: Expression): Statement()
+data class NormalAssignmentStatement(val variable: Variable, val expression: Expression): Statement()
+data class ReferenceAssignmentStatement(val variable: Variable, val expression: Expression): Statement()
+data class SumAssignmentStatement(val variable: Variable, val expression: Expression): Statement()
+data class DifferenceAssignmentStatement(val variable: Variable, val expression: Expression): Statement()
+data class MultiplicationAssignmentStatement(val variable: Variable, val expression: Expression): Statement()
+data class DivisionAssignmentStatement(val variable: Variable, val expression: Expression): Statement()
+data class ModuloAssignmentStatement(val variable: Variable, val expression: Expression): Statement()
+data class ExponentAssignmentStatement(val variable: Variable, val expression: Expression): Statement()
+data class RootAssignmentStatement(val variable: Variable, val expression: Expression): Statement()
 
 data class FunctionCallStatement(val expression: FunctionCallExpression): Statement()
 

@@ -61,7 +61,7 @@ Return:             'return';
 
 /// token groups
 
-Identifier:         [A-Za-z_]+; // to be changed to a library function isLetter()
+Identifier:         [A-Za-z_]+; // to be changed in implementation to a library function isLetter()
 Constant:           StringConstant | IntConstant | FloatConstant | BoolConstant;
 Type:               UnitType | IntType | FloatType | NumberType | StringType | BoolType;
 AssignOp:           NormalAssignOp | ReferenceAssignOp | SumAssignOp | DifferenceAssingOp | MultiplicationAssingOp | ExponentAssignOp | DivisionAssignOp | RootAssignOp | ModuloAssignOp;
@@ -75,7 +75,7 @@ restOfFunCall:      '(' arguments ')' (MemberOfSign Identifier '(' arguments ')'
 
 expressionPiece:    (Identifier restOfFunCall?) | Constant | ('(' expression ')');
 castExpression:     expressionPiece (CastOp Type)?;
-exponentExpression: castExpression ((ExponentOp | RootOp) castExpression)*;
+exponentExpression: castExpression ((ExponentOp | RootOp) exponentExpression)*; // this is right-handed first, so the "right" part needs to be recursive
 inverseExpression:  DifferenceOp? exponentExpression;
 multiplyExpression: inverseExpression ((MultiplicationOp | DifferenceOp | ModuloOp) inverseExpression)*;
 addExpression:      multiplyExpression ((SumOp | DifferenceOp) multiplyExpression)*;
