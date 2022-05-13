@@ -77,4 +77,4 @@ data class ReturnStatement(val expression: Expression): Statement()
 
 data class Function(val name: String, val type: Any, val parameters: Array<TypedIdentifier>, val block: Array<Statement>): Visitable()
 
-data class Program(val funDeclarations: Array<Function>): Visitable()
+data class Program(val funDeclarations: Array<Function>, val exceptions: Array<SyntaxError>): Visitable()

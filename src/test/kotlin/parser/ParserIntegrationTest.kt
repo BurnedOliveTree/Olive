@@ -29,22 +29,16 @@ class ParserIntegrationTest: FunSpec({
                                         IntConstant(0)
                                     ),
                                     arrayOf(
-                                        AssignmentStatement(
+                                        SumAssignmentStatement(
                                             Variable("count"),
-                                            AddExpression(
-                                                Variable("count"),
-                                                Variable("iterator")
-                                            )
+                                            Variable("iterator")
                                         )
                                     ),
                                     null
                                 ),
-                                AssignmentStatement(
+                                SumAssignmentStatement(
                                     Variable("iterator"),
-                                    AddExpression(
-                                        Variable("iterator"),
-                                        IntConstant(1)
-                                    )
+                                    IntConstant(1)
                                 )
                             )
                         ),
@@ -58,7 +52,7 @@ class ParserIntegrationTest: FunSpec({
                 ),
                 Function("main", Unit, arrayOf(),
                     arrayOf(
-                        VarDeclarationStatement("number", Float, FloatConstant(value=6.5)),
+                        VarDeclarationStatement("number", Float, FloatConstant(6.5)),
                         FunctionCallStatement(
                             FunctionCallExpression(
                                 "isPerfectNumber",
@@ -69,7 +63,8 @@ class ParserIntegrationTest: FunSpec({
                         )
                     )
                 )
-            )
+            ),
+            emptyArray()
         )
         FileReader("build/resources/test/sample.cat").use { file ->
             val parser = Parser(LexerIterator(Lexer(CodeIterator(file))))
