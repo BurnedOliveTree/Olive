@@ -123,5 +123,177 @@ class ParserUnitTest: FunSpec({
             Parser(LexerTokenIterator(iterable.first)).parse() shouldBe iterable.second
         }
     }
+    // While '(' expression ')' block;
+    context("while statement tests") {
+        withData(
+            nameFn = { "Sequence of $it" },
+            listOf(
+                TokenType.While.toToken(),
+                TokenType.LeftParenthesesSign.toToken(),
+                TokenType.BoolConstant.toToken(true),
+                TokenType.RightParenthesesSign.toToken(),
+                TokenType.LeftBraceSign.toToken(),
+                TokenType.RightBraceSign.toToken()
+            ).wrapInProgram() to listOf(
+                WhileStatement(BoolConstant(true), listOf())
+            ).wrapInProgram(),
+            listOf(
+                TokenType.While.toToken(),
+                TokenType.LeftParenthesesSign.toToken(),
+                TokenType.BoolConstant.toToken(true),
+                TokenType.RightParenthesesSign.toToken(),
+                TokenType.LeftBraceSign.toToken(),
+                TokenType.Identifier.toToken("function"),
+                TokenType.LeftParenthesesSign.toToken(),
+                TokenType.RightParenthesesSign.toToken(),
+                TokenType.EndSign.toToken(),
+                TokenType.RightBraceSign.toToken()
+            ).wrapInProgram() to listOf(
+                WhileStatement(BoolConstant(true), listOf(FunctionCallStatement(FunctionCallExpression("function", listOf()))))
+            ).wrapInProgram(),
+        ) { iterable ->
+            Parser(LexerTokenIterator(iterable.first)).parse() shouldBe iterable.second
+        }
+    }
+    // Variable typedIdentifier (NormalAssignOp expression)? EndSign;
+    context("variable definition statement tests") {
+        withData(
+            nameFn = { "Sequence of $it" },
+            listOf(
+                TokenType.Variable.toToken(),
+                TokenType.Identifier.toToken("variable"),
+                TokenType.TypeSign.toToken(),
+                TokenType.IntType.toToken(),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                VarDeclarationStatement("variable", Int, null)
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Variable.toToken(),
+                TokenType.Identifier.toToken("variable"),
+                TokenType.TypeSign.toToken(),
+                TokenType.IntType.toToken(),
+                TokenType.NormalAssignOp.toToken(),
+                TokenType.IntConstant.toToken(1),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                VarDeclarationStatement("variable", Int, IntConstant(1))
+            ).wrapInProgram(),
+        ) { iterable ->
+            Parser(LexerTokenIterator(iterable.first)).parse() shouldBe iterable.second
+        }
+    }
+    // Identifier (restOfFunCall | (AssignOp expression)) EndSign;
+    context("identifier-started statement tests") {
+        withData(
+            nameFn = { "Sequence of $it" },
+            listOf(
+                TokenType.Identifier.toToken("function"),
+                TokenType.LeftParenthesesSign.toToken(),
+                TokenType.RightParenthesesSign.toToken(),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                FunctionCallStatement(FunctionCallExpression("function", listOf()))
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Identifier.toToken("variable"),
+                TokenType.SumAssignOp.toToken(),
+                TokenType.IntConstant.toToken(0),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                SumAssignmentStatement(Variable("variable"), IntConstant(0))
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Identifier.toToken("variable"),
+                TokenType.DifferenceAssignOp.toToken(),
+                TokenType.IntConstant.toToken(1),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                DifferenceAssignmentStatement(Variable("variable"), IntConstant(1))
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Identifier.toToken("variable"),
+                TokenType.MultiplicationAssignOp.toToken(),
+                TokenType.IntConstant.toToken(2),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                MultiplicationAssignmentStatement(Variable("variable"), IntConstant(2))
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Identifier.toToken("variable"),
+                TokenType.DivisionAssignOp.toToken(),
+                TokenType.IntConstant.toToken(3),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                DivisionAssignmentStatement(Variable("variable"), IntConstant(3))
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Identifier.toToken("variable"),
+                TokenType.ModuloAssignOp.toToken(),
+                TokenType.IntConstant.toToken(4),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                ModuloAssignmentStatement(Variable("variable"), IntConstant(4))
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Identifier.toToken("variable"),
+                TokenType.ExponentAssignOp.toToken(),
+                TokenType.IntConstant.toToken(5),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                ExponentAssignmentStatement(Variable("variable"), IntConstant(5))
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Identifier.toToken("variable"),
+                TokenType.RootAssignOp.toToken(),
+                TokenType.IntConstant.toToken(6),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                RootAssignmentStatement(Variable("variable"), IntConstant(6))
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Identifier.toToken("variable"),
+                TokenType.NormalAssignOp.toToken(),
+                TokenType.IntConstant.toToken(7),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                NormalAssignmentStatement(Variable("variable"), IntConstant(7))
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Identifier.toToken("variable"),
+                TokenType.ReferenceAssignOp.toToken(),
+                TokenType.IntConstant.toToken(8),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                ReferenceAssignmentStatement(Variable("variable"), IntConstant(8))
+            ).wrapInProgram(),
+        ) { iterable ->
+            Parser(LexerTokenIterator(iterable.first)).parse() shouldBe iterable.second
+        }
+    }
+    // Return expression EndSign;
+    context("return statement tests") {
+        withData(
+            nameFn = { "Sequence of $it" },
+            listOf(
+                TokenType.Return.toToken(),
+                TokenType.IntConstant.toToken(0),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                ReturnStatement(IntConstant(0))
+            ).wrapInProgram(),
+            listOf(
+                TokenType.Return.toToken(),
+                TokenType.IntConstant.toToken(5),
+                TokenType.SumOp.toToken(),
+                TokenType.IntConstant.toToken(3),
+                TokenType.EndSign.toToken()
+            ).wrapInProgram() to listOf(
+                ReturnStatement(AddExpression(IntConstant(5), IntConstant(3)))
+            ).wrapInProgram()
+        ) { iterable ->
+            Parser(LexerTokenIterator(iterable.first)).parse() shouldBe iterable.second
+        }
+    }
     // TODO more tests
 })
