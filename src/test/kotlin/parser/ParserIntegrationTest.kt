@@ -9,9 +9,9 @@ import java.io.FileReader
 class ParserIntegrationTest: FunSpec({
     test("Should properly parse all tokens") {
         val program = Program(
-            arrayOf(
-                Function("isPerfectNumber", Boolean, arrayOf(TypedIdentifier("number", Int)),
-                    arrayOf(
+            listOf(
+                Function("isPerfectNumber", Boolean, listOf(TypedIdentifier("number", Int)),
+                    listOf(
                         VarDeclarationStatement("count", Int, IntConstant(0)),
                         VarDeclarationStatement("iterator", Int, IntConstant(1)),
                         WhileStatement(
@@ -19,7 +19,7 @@ class ParserIntegrationTest: FunSpec({
                                 Variable("iterator"),
                                 Variable("number")
                             ),
-                            arrayOf(
+                            listOf(
                                 IfStatement(
                                     NormalComparisonExpression(
                                         ModuloExpression(
@@ -28,7 +28,7 @@ class ParserIntegrationTest: FunSpec({
                                         ),
                                         IntConstant(0)
                                     ),
-                                    arrayOf(
+                                    listOf(
                                         SumAssignmentStatement(
                                             Variable("count"),
                                             Variable("iterator")
@@ -50,13 +50,13 @@ class ParserIntegrationTest: FunSpec({
                         )
                     )
                 ),
-                Function("main", Unit, arrayOf(),
-                    arrayOf(
+                Function("main", Unit, listOf(),
+                    listOf(
                         VarDeclarationStatement("number", Float, FloatConstant(6.5)),
                         FunctionCallStatement(
                             FunctionCallExpression(
                                 "isPerfectNumber",
-                                arrayOf(
+                                listOf(
                                     CastExpression(Variable("number"), Int)
                                 )
                             )
@@ -64,7 +64,7 @@ class ParserIntegrationTest: FunSpec({
                     )
                 )
             ),
-            emptyArray()
+            emptyList()
         )
         FileReader("build/resources/test/sample.cat").use { file ->
             val parser = Parser(LexerIterator(Lexer(CodeIterator(file))))

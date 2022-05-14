@@ -3,7 +3,6 @@ package parser
 import lexer.Lexer
 import lexer.LexerToken
 import lexer.TokenType
-import java.util.*
 
 abstract class BaseLexerIterator {
     abstract fun current(): LexerToken
@@ -20,12 +19,16 @@ class LexerIterator(private val lexer: Lexer): BaseLexerIterator() {
     }
 }
 
-class LexerTokenIterator(private val iterable: Iterable<LexerToken>): BaseLexerIterator() {
-    private var current = iterable.first()
+class LexerTokenIterator(iterable: Iterable<LexerToken>): BaseLexerIterator() {
+    private val iterator = iterable.iterator()
+    private var current = iterator.next()
 
     override fun current() = current
     override fun next(): LexerToken {
-        current = iterable.first()
+        current = if (iterator.hasNext())
+            iterator.next()
+        else
+            LexerToken(TokenType.End, null, -1, -1)
         return current
     }
 }
@@ -33,7 +36,7 @@ class LexerTokenIterator(private val iterable: Iterable<LexerToken>): BaseLexerI
 class Parser(private val iterator: BaseLexerIterator) {
     // Parser RD
 
-    private val exceptions = Vector<SyntaxError>()
+    private val exceptions = mutableListOf<SyntaxError>()
     private val typeMap = mapOf(
         TokenType.UnitType to Unit,
         TokenType.IntType to Int,
@@ -69,7 +72,7 @@ class Parser(private val iterator: BaseLexerIterator) {
 
     // funDeclaration+;
     fun parse(): Program {
-        val functions: Vector<Function> = Vector()
+        val functions = mutableListOf<Function>()
         var function: Function? = parseFunDeclaration()
             ?: throw ExpectedOtherTokenException(iterator.current(), this::parse.name, "funDeclaration")
         while (function != null) {
@@ -78,7 +81,7 @@ class Parser(private val iterator: BaseLexerIterator) {
         }
         if (iterator.next().type != TokenType.End)
             throw ExpectedOtherTokenException(iterator.current(), this::parse.name, "endOfText")
-        return Program(functions.toTypedArray(), exceptions.toTypedArray())
+        return Program(functions.toList(), exceptions.toList())
     }
 
     // Identifier '(' parameters ')' TypeSign Type block;
@@ -105,17 +108,17 @@ class Parser(private val iterator: BaseLexerIterator) {
     }
 
     // (typedIdentifier (EnumerationSign typedIdentifier)*)?;
-    private fun parseParameters(): Array<TypedIdentifier> {
-        val parameters = Vector<TypedIdentifier>()
+    private fun parseParameters(): List<TypedIdentifier> {
+        val parameters = mutableListOf<TypedIdentifier>()
 
-        parameters.add(parseTypedIdentifier() ?: return parameters.toTypedArray())
+        parameters.add(parseTypedIdentifier() ?: return parameters.toList())
         while (isTokenTypeThenConsume(TokenType.EnumerationSign)) {
             parseTypedIdentifier().let {
                 parameters.add(it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseParameters.name, "typedIdentifier"))
             }
         }
 
-        return parameters.toTypedArray()
+        return parameters.toList()
     }
 
     // Identifier TypeSign Type;
@@ -134,11 +137,11 @@ class Parser(private val iterator: BaseLexerIterator) {
     }
 
     // '{' (idStartedStatement | varDeclaration | ifStatement | whileStatement | returnStatement)* '}';
-    private fun parseBlock(): Array<Statement>? {
+    private fun parseBlock(): List<Statement>? {
         if (!isTokenTypeThenConsume(TokenType.LeftBraceSign))
             return null
 
-        val block = Vector<Statement>()
+        val block = mutableListOf<Statement>()
         var statement: Statement?
         do {
             statement = parseIfStatement() ?:
@@ -149,7 +152,7 @@ class Parser(private val iterator: BaseLexerIterator) {
             statement?.let { block.add(statement) }
         } while (statement != null)
         ifTokenTypeThenConsumeElseException(TokenType.RightBraceSign, this::parseBlock.name)
-        return block.toTypedArray()
+        return block.toList()
     }
 
     // If '(' expression ')' block elseStatement?;
@@ -169,7 +172,7 @@ class Parser(private val iterator: BaseLexerIterator) {
     }
 
     // Else block;
-    private fun parseElseStatement(): Array<Statement>? {
+    private fun parseElseStatement(): List<Statement>? {
         if (!isTokenTypeThenConsume(TokenType.Else))
             return null
         val block = parseBlock().let {
@@ -485,23 +488,23 @@ class Parser(private val iterator: BaseLexerIterator) {
             ifTokenTypeThenConsumeElseException(TokenType.LeftParenthesesSign, this::parseRestOfFunctionCall.name)
             arguments = parseArguments()
             ifTokenTypeThenConsumeElseException(TokenType.RightParenthesesSign, this::parseRestOfFunctionCall.name)
-            functionCallExpression = FunctionCallExpression(newName, (arguments.toList() + functionCallExpression).toTypedArray())
+            functionCallExpression = FunctionCallExpression(newName, (arguments.toList() + functionCallExpression).toList())
         }
         return functionCallExpression
     }
 
     // (expression (EnumerationSign expression)*)?;
-    private fun parseArguments(): Array<Expression> {
-        val arguments = Vector<Expression>()
+    private fun parseArguments(): List<Expression> {
+        val arguments = mutableListOf<Expression>()
         arguments.add(parseExpression().let {
-            it ?: return arguments.toTypedArray()
+            it ?: return arguments.toList()
         })
         while (isTokenTypeThenConsume(TokenType.EnumerationSign)) {
             arguments.add(parseExpression().let {
                 it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseArguments.name, "expression")
             })
         }
-        return arguments.toTypedArray()
+        return arguments.toList()
     }
 
     private fun parseType(): Any? {
