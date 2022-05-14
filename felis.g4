@@ -77,7 +77,7 @@ expressionPiece:    (Identifier restOfFunCall?) | Constant | ('(' expression ')'
 castExpression:     expressionPiece (CastOp Type)?;
 exponentExpression: castExpression ((ExponentOp | RootOp) exponentExpression)*; // this is right-handed first, so the "right" part needs to be recursive
 inverseExpression:  DifferenceOp? exponentExpression;
-multiplyExpression: inverseExpression ((MultiplicationOp | DifferenceOp | ModuloOp) inverseExpression)*;
+multiplyExpression: inverseExpression ((MultiplicationOp | DivisionOp | ModuloOp) inverseExpression)*;
 addExpression:      multiplyExpression ((SumOp | DifferenceOp) multiplyExpression)*;
 compareExpression:  addExpression ((LesserThanOp | LesserOrEqualOp | GreaterThanOp | GreaterOrEqualOp) addExpression)?;
 typeCheckExpression:compareExpression (IsOp Type)?;

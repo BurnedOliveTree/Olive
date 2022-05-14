@@ -383,7 +383,7 @@ class Parser(private val iterator: BaseLexerIterator) {
         return left
     }
 
-    // inverseExpression ((MultiplicationOp | DifferenceOp | ModuloOp) inverseExpression)*
+    // inverseExpression ((MultiplicationOp | DivisionOp | ModuloOp) inverseExpression)*
     private fun parseMultiplyExpression(): Expression? {
         var left = parseInverseExpression().let {
             it ?: return null
