@@ -1,7 +1,5 @@
 package interpreter
 
-import utilities.TypedValue
-
 abstract class SemanticsError(protected val currentFunction: String): Exception()
 
 class MissingDeclarationException(currentFunction: String, private val expectedDeclaration: String): SemanticsError(currentFunction) {

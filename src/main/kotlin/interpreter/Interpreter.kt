@@ -2,111 +2,7 @@ package interpreter
 
 import parser.*
 import parser.Function
-import utilities.TypedValue
-import utilities.toTypedNull
-import java.util.Stack
 import kotlin.math.pow
-import kotlin.reflect.KClass
-
-class Scope {
-    private val variables = mutableMapOf<String, TypedValue>()
-
-    fun declare(name: String, type: KClass<out Any>, value: TypedValue?, functionName: String) {
-        if (value != null)
-            if (value.value!!::class != type)
-                throw TypeException(functionName, variables[name]!!, value)
-        variables[name] = value ?: type.toTypedNull()
-        println(variables.forEach { print(it.key to it.value.value) })
-    }
-
-    fun assign(name: String, value: TypedValue, functionName: String) {
-        if (value.value!!::class != variables[name]!!.value!!::class)
-            throw TypeException(functionName, variables[name]!!, value)
-        variables[name] = value
-        println(variables.forEach { print(it.key to it.value.value) })
-    }
-
-    fun value(name: String): TypedValue? {
-        println(variables.forEach { print(it.key to it.value.value) })
-        return variables[name]
-    }
-
-    fun isPresent(name: String): Boolean {
-        return variables.containsKey(name)
-    }
-}
-
-class CallContext(val name: String) {
-    private val scopes = Stack<Scope>()
-    var returnFlag = false
-
-    fun declare(name: String, type: KClass<out Any>, value: TypedValue?, functionName: String) {
-        scopes.last().declare(name, type, value, functionName)
-    }
-
-    fun assign(name: String, value: TypedValue, functionName: String) {
-        val scope = scopes.reversed().firstOrNull { it.isPresent(name) }
-        scope?.assign(name, value, functionName) ?: throw MissingDeclarationException(functionName, name)
-    }
-
-    fun value(name: String, functionName: String): TypedValue {
-        val scope = scopes.reversed().firstOrNull { it.isPresent(name) }
-        return scope?.value(name) ?: throw MissingDeclarationException(functionName, name)
-    }
-
-    fun enter() {
-        scopes.push(Scope())
-    }
-
-    fun leave() {
-        scopes.pop()
-    }
-}
-
-class Environment {
-    private val functionCalls = Stack<CallContext>()
-    private val stack = Stack<TypedValue>()
-
-    fun variableDeclare(name: String, type: KClass<out Any>, value: TypedValue?) {
-        functionCalls.last().declare(name, type, value, functionName())
-    }
-    fun variableAssign(name: String, value: TypedValue) {
-        functionCalls.last().assign(name, value, functionName())
-    }
-    fun variableValue(name: String): TypedValue {
-        return functionCalls.last().value(name, functionName())
-    }
-
-    fun blockEnter() {
-        functionCalls.last().enter()
-    }
-    fun blockLeave() {
-        functionCalls.last().leave()
-    }
-
-    fun functionCall(name: String) {
-        functionCalls.push(CallContext(name))
-        functionCalls.last().enter()
-    }
-    fun functionLeave() {
-        functionCalls.last().leave()
-        functionCalls.pop()
-    }
-
-    fun functionName(): String {
-        return functionCalls.last().name
-    }
-
-    fun push(value: TypedValue) {
-        stack.push(value)
-    }
-    fun pop(): TypedValue {
-        return stack.pop()
-    }
-
-    fun isReturn() = functionCalls.last().returnFlag
-    fun setReturn() { functionCalls.last().returnFlag = true }
-}
 
 class Interpreter: Visitor() {
     private lateinit var functions: Map<String, Function>
@@ -151,7 +47,7 @@ class Interpreter: Visitor() {
 
     override fun visit(visitable: IfStatement) {
         visit(visitable.condition)
-        if ((environment.pop() as TypedValue.tBool).value!!) {
+        if ((environment.pop() as TypedValue.Bool).value!!) {
             environment.blockEnter()
             for (statement in visitable.ifBlock) {
                 visit(statement)
@@ -175,7 +71,7 @@ class Interpreter: Visitor() {
     override fun visit(visitable: WhileStatement) {
         environment.blockEnter()
         visit(visitable.condition)
-        while ((environment.pop() as TypedValue.tBool).value!! && !environment.isReturn()) {
+        while ((environment.pop() as TypedValue.Bool).value!! && !environment.isReturn()) {
             for (statement in visitable.whileBlock) {
                 visit(statement)
                 if (environment.isReturn())
@@ -200,11 +96,11 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.variableAssign(visitable.variable.name, TypedValue.tInt(left.value!! + right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.variableAssign(visitable.variable.name, TypedValue.tFloat(left.value!! + right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!! + right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! + right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -214,11 +110,11 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.variableAssign(visitable.variable.name, TypedValue.tInt(left.value!! - right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.variableAssign(visitable.variable.name, TypedValue.tFloat(left.value!! - right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!! - right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! - right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -228,11 +124,11 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.variableAssign(visitable.variable.name, TypedValue.tInt(left.value!! * right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.variableAssign(visitable.variable.name, TypedValue.tFloat(left.value!! * right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!! * right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! * right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -242,11 +138,11 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.variableAssign(visitable.variable.name, TypedValue.tInt(left.value!! / right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.variableAssign(visitable.variable.name, TypedValue.tFloat(left.value!! / right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!! / right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! / right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -256,11 +152,11 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.variableAssign(visitable.variable.name, TypedValue.tInt(left.value!! % right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.variableAssign(visitable.variable.name, TypedValue.tFloat(left.value!! % right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!! % right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! % right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -270,11 +166,11 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.variableAssign(visitable.variable.name, TypedValue.tInt(left.value!!.toDouble().pow(right.value!!).toInt()))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.variableAssign(visitable.variable.name, TypedValue.tFloat(left.value!!.pow(right.value!!)))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!!.toDouble().pow(right.value!!).toInt()))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!!.pow(right.value!!)))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -284,11 +180,11 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.variableAssign(visitable.variable.name, TypedValue.tInt(left.value!!.toDouble().pow(1 / right.value!!).toInt()))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.variableAssign(visitable.variable.name, TypedValue.tFloat(left.value!!.pow(1 / right.value!!)))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!!.toDouble().pow(1 / right.value!!).toInt()))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!!.pow(1 / right.value!!)))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -314,11 +210,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left !is TypedValue.tBool)
-            throw TypeException(environment.functionName(), TypedValue.tBool(null), left)
-        if (right !is TypedValue.tBool)
-            throw TypeException(environment.functionName(), TypedValue.tBool(null), right)
-        environment.push(TypedValue.tBool(left.value!! || right.value!!))
+        if (left !is TypedValue.Bool)
+            throw TypeException(environment.functionName(), TypedValue.Bool(null), left)
+        if (right !is TypedValue.Bool)
+            throw TypeException(environment.functionName(), TypedValue.Bool(null), right)
+        environment.push(TypedValue.Bool(left.value!! || right.value!!))
     }
 
     override fun visit(visitable: AndExpression) {
@@ -326,11 +222,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left !is TypedValue.tBool)
-            throw TypeException(environment.functionName(), TypedValue.tBool(null), left)
-        if (right !is TypedValue.tBool)
-            throw TypeException(environment.functionName(), TypedValue.tBool(null), right)
-        environment.push(TypedValue.tBool(left.value!! && right.value!!))
+        if (left !is TypedValue.Bool)
+            throw TypeException(environment.functionName(), TypedValue.Bool(null), left)
+        if (right !is TypedValue.Bool)
+            throw TypeException(environment.functionName(), TypedValue.Bool(null), right)
+        environment.push(TypedValue.Bool(left.value!! && right.value!!))
     }
 
     override fun visit(visitable: NormalComparisonExpression) {
@@ -340,7 +236,7 @@ class Interpreter: Visitor() {
         val left = environment.pop()
         if (left::class != right::class)
             throw TypeException(environment.functionName(), right, left)
-        environment.push(TypedValue.tBool(left.value!! == right.value!!))
+        environment.push(TypedValue.Bool(left.value!! == right.value!!))
     }
 
     override fun visit(visitable: ReferenceComparisonExpression) {
@@ -350,20 +246,20 @@ class Interpreter: Visitor() {
         val left = environment.pop()
         if (left::class != right::class)
             throw TypeException(environment.functionName(), right, left)
-        environment.push(TypedValue.tBool(left.value!! === right.value!!)) // TODO
+        environment.push(TypedValue.Bool(left.value!! === right.value!!)) // TODO
     }
 
     override fun visit(visitable: NotExpression) {
         visit(visitable.expression)
         val value = environment.pop()
-        if (value !is TypedValue.tBool)
-            throw TypeException(environment.functionName(), TypedValue.tBool(null), value)
-        environment.push(TypedValue.tBool(!value.value!!))
+        if (value !is TypedValue.Bool)
+            throw TypeException(environment.functionName(), TypedValue.Bool(null), value)
+        environment.push(TypedValue.Bool(!value.value!!))
     }
 
     override fun visit(visitable: TypeCheckExpression) {
         visit(visitable.expression)
-        environment.push(TypedValue.tBool(environment.pop()::class == visitable.type))
+        environment.push(TypedValue.Bool(environment.pop()::class == visitable.type))
     }
 
     override fun visit(visitable: LesserThanExpression) {
@@ -371,11 +267,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.push(TypedValue.tBool(left.value!! < right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.push(TypedValue.tBool(left.value!! < right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.push(TypedValue.Bool(left.value!! < right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.push(TypedValue.Bool(left.value!! < right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -386,11 +282,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.push(TypedValue.tBool(left.value!! <= right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.push(TypedValue.tBool(left.value!! <= right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.push(TypedValue.Bool(left.value!! <= right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.push(TypedValue.Bool(left.value!! <= right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -401,11 +297,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.push(TypedValue.tBool(left.value!! > right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.push(TypedValue.tBool(left.value!! > right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.push(TypedValue.Bool(left.value!! > right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.push(TypedValue.Bool(left.value!! > right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -416,11 +312,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.push(TypedValue.tBool(left.value!! >= right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.push(TypedValue.tBool(left.value!! >= right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.push(TypedValue.Bool(left.value!! >= right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.push(TypedValue.Bool(left.value!! >= right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -431,11 +327,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.push(TypedValue.tInt(left.value!! + right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.push(TypedValue.tFloat(left.value!! + right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.push(TypedValue.Int(left.value!! + right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.push(TypedValue.Float(left.value!! + right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -446,11 +342,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.push(TypedValue.tInt(left.value!! - right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.push(TypedValue.tFloat(left.value!! - right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.push(TypedValue.Int(left.value!! - right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.push(TypedValue.Float(left.value!! - right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -461,11 +357,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.push(TypedValue.tInt(left.value!! * right.value!!))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.push(TypedValue.tFloat(left.value!! * right.value!!))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.push(TypedValue.Int(left.value!! * right.value!!))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.push(TypedValue.Float(left.value!! * right.value!!))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -476,11 +372,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt) {
-            environment.push(TypedValue.tInt(left.value!! / right.value!!))
-        } else if (left is TypedValue.tFloat && right is TypedValue.tFloat) {
-            environment.push(TypedValue.tFloat(left.value!! / right.value!!))
-        } else if (left is TypedValue.tInt || left is TypedValue.tFloat) {
+        if (left is TypedValue.Int && right is TypedValue.Int) {
+            environment.push(TypedValue.Int(left.value!! / right.value!!))
+        } else if (left is TypedValue.Float && right is TypedValue.Float) {
+            environment.push(TypedValue.Float(left.value!! / right.value!!))
+        } else if (left is TypedValue.Int || left is TypedValue.Float) {
             throw TypeException(environment.functionName(), left, right)
         } else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -491,11 +387,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt) {
-            environment.push(TypedValue.tInt(left.value!! % right.value!!))
-        } else if (left is TypedValue.tFloat && right is TypedValue.tFloat) {
-            environment.push(TypedValue.tFloat(left.value!! % right.value!!))
-        } else if (left is TypedValue.tInt || left is TypedValue.tFloat) {
+        if (left is TypedValue.Int && right is TypedValue.Int) {
+            environment.push(TypedValue.Int(left.value!! % right.value!!))
+        } else if (left is TypedValue.Float && right is TypedValue.Float) {
+            environment.push(TypedValue.Float(left.value!! % right.value!!))
+        } else if (left is TypedValue.Int || left is TypedValue.Float) {
             throw TypeException(environment.functionName(), left, right)
         } else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -505,8 +401,8 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val value = environment.pop()
         when (value) {
-            is TypedValue.tInt -> environment.push(TypedValue.tInt(-value.value!!))
-            is TypedValue.tFloat -> environment.push(TypedValue.tFloat(-value.value!!))
+            is TypedValue.Int -> environment.push(TypedValue.Int(-value.value!!))
+            is TypedValue.Float -> environment.push(TypedValue.Float(-value.value!!))
             else -> throw TypeException(environment.functionName(), Int::class.toTypedNull(), value)
         }
         environment.push(value)
@@ -517,11 +413,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.push(TypedValue.tInt(left.value!!.toDouble().pow(right.value!!).toInt()))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.push(TypedValue.tFloat(left.value!!.pow(right.value!!)))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.push(TypedValue.Int(left.value!!.toDouble().pow(right.value!!).toInt()))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.push(TypedValue.Float(left.value!!.pow(right.value!!)))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -532,11 +428,11 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
-        if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.push(TypedValue.tFloat(left.value!!.toDouble().pow(1.0 / right.value!!)))
-        else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.push(TypedValue.tFloat(left.value!!.pow(1.0 / right.value!!)))
-        else if (left is TypedValue.tInt || left is TypedValue.tFloat)
+        if (left is TypedValue.Int && right is TypedValue.Int)
+            environment.push(TypedValue.Float(left.value!!.toDouble().pow(1.0 / right.value!!)))
+        else if (left is TypedValue.Float && right is TypedValue.Float)
+            environment.push(TypedValue.Float(left.value!!.pow(1.0 / right.value!!)))
+        else if (left is TypedValue.Int || left is TypedValue.Float)
             throw TypeException(environment.functionName(), left, right)
         else
             throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
@@ -545,17 +441,17 @@ class Interpreter: Visitor() {
     override fun visit(visitable: CastExpression) {
         visit(visitable.expression)
         val value = environment.pop()
-        if (visitable.type == Double::class && value is TypedValue.tInt) {
-            environment.push(TypedValue.tFloat(value.value!!.toDouble()))
-        } else if (visitable.type == Int::class && value is TypedValue.tFloat) {
-            environment.push(TypedValue.tInt(value.value!!.toInt()))
+        if (visitable.type == Double::class && value is TypedValue.Int) {
+            environment.push(TypedValue.Float(value.value!!.toDouble()))
+        } else if (visitable.type == Int::class && value is TypedValue.Float) {
+            environment.push(TypedValue.Int(value.value!!.toInt()))
         } else {
             when (visitable.type) {
-                Int::class -> environment.push(TypedValue.tInt(value.value!! as Int))
-                Double::class -> environment.push(TypedValue.tFloat(value.value!! as Double))
-                Boolean::class -> environment.push(TypedValue.tBool(value.value!! as Boolean))
-                String::class -> environment.push(TypedValue.tString(value.value!! as String))
-                else -> throw TypeException(environment.functionName(), TypedValue.tInt(null), value)
+                Int::class -> environment.push(TypedValue.Int(value.value!! as Int))
+                Double::class -> environment.push(TypedValue.Float(value.value!! as Double))
+                Boolean::class -> environment.push(TypedValue.Bool(value.value!! as Boolean))
+                String::class -> environment.push(TypedValue.String(value.value!! as String))
+                else -> throw TypeException(environment.functionName(), TypedValue.Int(null), value)
             }
         }
     }
@@ -570,19 +466,19 @@ class Interpreter: Visitor() {
     }
 
     override fun visit(visitable: BoolConstant) {
-        environment.push(TypedValue.tBool(visitable.value))
+        environment.push(TypedValue.Bool(visitable.value))
     }
 
     override fun visit(visitable: FloatConstant) {
-        environment.push(TypedValue.tFloat(visitable.value))
+        environment.push(TypedValue.Float(visitable.value))
     }
 
     override fun visit(visitable: IntConstant) {
-        environment.push(TypedValue.tInt(visitable.value))
+        environment.push(TypedValue.Int(visitable.value))
     }
 
     override fun visit(visitable: StringConstant) {
-        environment.push(TypedValue.tString(visitable.value))
+        environment.push(TypedValue.String(visitable.value))
     }
 
     private fun visit(visitable: Statement) {
