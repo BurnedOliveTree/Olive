@@ -136,6 +136,7 @@ class Interpreter: Visitor() {
         }
         val returnValue = if (visitable.type != Unit::class) environment.pop() else null
         environment.functionLeave()
+        environment.push(returnValue ?: Unit::class.toTypedNull())
         // TODO do something with return value
         print(returnValue?.value)
     }
@@ -532,9 +533,9 @@ class Interpreter: Visitor() {
         val right = environment.pop()
         val left = environment.pop()
         if (left is TypedValue.tInt && right is TypedValue.tInt)
-            environment.push(TypedValue.tInt(left.value!!.toDouble().pow(1 / right.value!!).toInt()))
+            environment.push(TypedValue.tFloat(left.value!!.toDouble().pow(1.0 / right.value!!)))
         else if (left is TypedValue.tFloat && right is TypedValue.tFloat)
-            environment.push(TypedValue.tFloat(left.value!!.pow(1 / right.value!!)))
+            environment.push(TypedValue.tFloat(left.value!!.pow(1.0 / right.value!!)))
         else if (left is TypedValue.tInt || left is TypedValue.tFloat)
             throw TypeException(environment.functionName(), right)
         else

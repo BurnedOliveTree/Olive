@@ -28,6 +28,7 @@ fun KClass<out Any>.toTypedNull(): TypedValue {
         Double::class -> TypedValue.tFloat(null)
         Boolean::class -> TypedValue.tBool(null)
         String::class -> TypedValue.tString(null)
+        Unit::class -> TypedValue.tUnit(null)
         else -> throw IllegalStateException()
     }
 }

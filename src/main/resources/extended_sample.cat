@@ -1,0 +1,30 @@
+isPerfectNumber(number: Int): Bool {
+    var count: Int = 0;
+    var iterator: Int = 1;
+    while (iterator < number) {
+        if (number % iterator == 0) {
+            count += iterator;
+        }
+        iterator += 1;
+    }
+    return count == number;
+}
+
+isPrime(number: Int): Bool {
+    var root: Int = (number | 2) as Int;
+    if (number == 1) { return false; }
+    if (number == 2) { return true; }
+    if (number % 2 == 0) { return false; }
+    var iterator: Int = 3;
+    while (iterator <= root) {
+        if (number % iterator == 0) { return false; }
+        iterator += 2;
+    }
+    return true;
+}
+
+main(): Unit {
+    var number: Float = 6.5;
+    isPrime(7);
+    isPerfectNumber(number as Int);
+}
