@@ -10,10 +10,10 @@ class ParserIntegrationTest: FunSpec({
     test("Should properly parse all tokens") {
         val program = Program(
             listOf(
-                Function("isPerfectNumber", Boolean, listOf(TypedIdentifier("number", Int)),
+                Function("isPerfectNumber", Boolean::class, listOf(TypedIdentifier("number", Int::class)),
                     listOf(
-                        VarDeclarationStatement("count", Int, IntConstant(0)),
-                        VarDeclarationStatement("iterator", Int, IntConstant(1)),
+                        VarDeclarationStatement("count", Int::class, IntConstant(0)),
+                        VarDeclarationStatement("iterator", Int::class, IntConstant(1)),
                         WhileStatement(
                             LesserThanExpression(
                                 Variable("iterator"),
@@ -50,14 +50,14 @@ class ParserIntegrationTest: FunSpec({
                         )
                     )
                 ),
-                Function("main", Unit, listOf(),
+                Function("main", Unit::class, listOf(),
                     listOf(
-                        VarDeclarationStatement("number", Float, FloatConstant(6.5)),
+                        VarDeclarationStatement("number", Float::class, FloatConstant(6.5)),
                         FunctionCallStatement(
                             FunctionCallExpression(
                                 "isPerfectNumber",
                                 listOf(
-                                    CastExpression(Variable("number"), Int)
+                                    CastExpression(Variable("number"), Int::class)
                                 )
                             )
                         )

@@ -14,7 +14,7 @@ fun List<LexerToken>.wrapInProgram(): List<LexerToken> =
         TokenType.LeftBraceSign.toToken()) + this + listOf(TokenType.RightBraceSign.toToken())
 
 fun List<Statement>.wrapInProgram(): Program =
-    Program(listOf(Function("main", Unit, listOf(), this)), listOf())
+    Program(listOf(Function("main", Unit::class, listOf(), this)), listOf())
 
 class ParserUnitTest: FunSpec({
     // Identifier '(' parameters ')' TypeSign Type block;
@@ -32,7 +32,7 @@ class ParserUnitTest: FunSpec({
             ) to Program(listOf(
                 Function(
                     "main",
-                    Unit,
+                    Unit::class,
                     listOf(),
                     listOf()
                 )
@@ -51,9 +51,9 @@ class ParserUnitTest: FunSpec({
             ) to Program(listOf(
                 Function(
                     "main",
-                    Unit,
+                    Unit::class,
                     listOf(
-                        TypedIdentifier("number", Number)
+                        TypedIdentifier("number", Number::class)
                     ),
                     listOf()
                 )
@@ -76,10 +76,10 @@ class ParserUnitTest: FunSpec({
             ) to Program(listOf(
                 Function(
                     "main",
-                    Unit,
+                    Unit::class,
                     listOf(
-                        TypedIdentifier("number", Number),
-                        TypedIdentifier("string", String)
+                        TypedIdentifier("number", Number::class),
+                        TypedIdentifier("string", String::class)
                     ),
                     listOf()
                 )
@@ -166,7 +166,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntType.toToken(),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                VarDeclarationStatement("variable", Int, null)
+                VarDeclarationStatement("variable", Int::class, null)
             ).wrapInProgram(),
             listOf(
                 TokenType.Variable.toToken(),
@@ -177,7 +177,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntConstant.toToken(1),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                VarDeclarationStatement("variable", Int, IntConstant(1))
+                VarDeclarationStatement("variable", Int::class, IntConstant(1))
             ).wrapInProgram(),
         ) { iterable ->
             Parser(LexerTokenIterator(iterable.first)).parse() shouldBe iterable.second
@@ -439,7 +439,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.BoolType.toToken(),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                ReturnStatement(TypeCheckExpression(BoolConstant(true), Boolean))
+                ReturnStatement(TypeCheckExpression(BoolConstant(true), Boolean::class))
             ).wrapInProgram(),
         ) { iterable ->
             Parser(LexerTokenIterator(iterable.first)).parse() shouldBe iterable.second
@@ -655,7 +655,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.FloatType.toToken(),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                ReturnStatement(CastExpression(IntConstant(1), Float))
+                ReturnStatement(CastExpression(IntConstant(1), Float::class))
             ).wrapInProgram(),
         ) { iterable ->
             Parser(LexerTokenIterator(iterable.first)).parse() shouldBe iterable.second

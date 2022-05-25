@@ -3,6 +3,7 @@ package parser
 import lexer.Lexer
 import lexer.LexerToken
 import lexer.TokenType
+import kotlin.reflect.KClass
 
 abstract class BaseLexerIterator {
     abstract fun current(): LexerToken
@@ -38,12 +39,12 @@ class Parser(private val iterator: BaseLexerIterator) {
 
     private val exceptions = mutableListOf<SyntaxError>()
     private val typeMap = mapOf(
-        TokenType.UnitType to Unit,
-        TokenType.IntType to Int,
-        TokenType.FloatType to Float,
-        TokenType.NumberType to Number,
-        TokenType.StringType to String,
-        TokenType.BoolType to Boolean,
+        TokenType.UnitType to Unit::class,
+        TokenType.IntType to Int::class,
+        TokenType.FloatType to Double::class,
+        TokenType.NumberType to Number::class,
+        TokenType.StringType to String::class,
+        TokenType.BoolType to Boolean::class,
     )
 
     private fun isTokenType(tokenType: TokenType) = iterator.current().type == tokenType
@@ -507,7 +508,7 @@ class Parser(private val iterator: BaseLexerIterator) {
         return arguments.toList()
     }
 
-    private fun parseType(): Any? {
+    private fun parseType(): KClass<out Any>? {
         if (!iterator.current().type.isType())
             return null
         val type = typeMap[iterator.current().type]!!

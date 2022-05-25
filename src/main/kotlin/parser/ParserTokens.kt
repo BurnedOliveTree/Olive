@@ -1,5 +1,7 @@
 package parser
 
+import kotlin.reflect.KClass
+
 abstract class Visitor {
     // all `visit` should remain Unit type
     abstract fun visit(visitable: TypedIdentifier)
@@ -221,14 +223,7 @@ abstract class Visitable {
     abstract fun accept(visitor: Visitor)
 }
 
-sealed class Number {
-    class Int(val value: Int) : Number()
-    class Float(val value: Float) : Number()
-
-    companion object
-}
-
-data class TypedIdentifier(val name: String, val type: Any): Visitable() {
+data class TypedIdentifier(val name: String, val type: KClass<out Any>): Visitable() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
@@ -253,7 +248,7 @@ data class NotExpression(val expression: Expression): Expression() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
-data class TypeCheckExpression(val expression: Expression, val type: Any): Expression() {
+data class TypeCheckExpression(val expression: Expression, val type: KClass<out Any>): Expression() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
@@ -298,7 +293,7 @@ data class RootExpression(val left: Expression, val right: Expression): Expressi
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
-data class CastExpression(val expression: Expression, val type: Any): Expression() {
+data class CastExpression(val expression: Expression, val type: KClass<out Any>): Expression() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
@@ -324,7 +319,7 @@ data class FunctionCallExpression(val name: String, val arguments: List<Expressi
 
 abstract class Statement: Visitable()
 
-data class VarDeclarationStatement(val name: String, val type: Any, val value: Expression?): Statement() {
+data class VarDeclarationStatement(val name: String, val type: KClass<out Any>, val value: Expression?): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
@@ -372,7 +367,7 @@ data class ReturnStatement(val expression: Expression): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
-data class Function(val name: String, val type: Any, val parameters: List<TypedIdentifier>, val block: List<Statement>): Visitable() {
+data class Function(val name: String, val type: KClass<out Any>, val parameters: List<TypedIdentifier>, val block: List<Statement>): Visitable() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 

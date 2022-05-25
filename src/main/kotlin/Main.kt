@@ -1,3 +1,4 @@
+import interpreter.Interpreter
 import lexer.CodeIterator
 import lexer.Lexer
 import parser.LexerIterator
@@ -11,6 +12,7 @@ fun main(args: Array<String>) {
     FileReader(args[0]).use {
         val lexer = Lexer(CodeIterator(it))
         val parser = Parser(LexerIterator(lexer))
-        println(parser.parse())
+        val interpreter = Interpreter()
+        interpreter.visit(parser.parse())
     }
 }
