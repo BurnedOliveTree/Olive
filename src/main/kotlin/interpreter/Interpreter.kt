@@ -263,7 +263,7 @@ class Interpreter: Visitor() {
 
     override fun visit(visitable: TypeCheckExpression) {
         visit(visitable.expression)
-        environment.push(TypedValue.Bool(environment.pop()::class == visitable.type))
+        environment.push(TypedValue.Bool(environment.pop().value!!::class == visitable.type))
     }
 
     override fun visit(visitable: LesserThanExpression) {
@@ -409,7 +409,6 @@ class Interpreter: Visitor() {
             is TypedValue.Float -> environment.push(TypedValue.Float(-value.value!!))
             else -> throw TypeException(environment.functionName(), Int::class.toTypedNull(), value)
         }
-        environment.push(value)
     }
 
     override fun visit(visitable: ExponentExpression) {
@@ -485,7 +484,7 @@ class Interpreter: Visitor() {
         environment.push(TypedValue.String(visitable.value))
     }
 
-    private fun visit(visitable: Statement) {
+    internal fun visit(visitable: Statement) {
         // TODO fix this
         when (visitable) {
             is VarDeclarationStatement -> visit(visitable)
@@ -505,7 +504,7 @@ class Interpreter: Visitor() {
         }
     }
 
-    private fun visit(visitable: Expression) {
+    internal fun visit(visitable: Expression) {
         // TODO fix this
         when (visitable) {
             is OrExpression -> visit(visitable)
