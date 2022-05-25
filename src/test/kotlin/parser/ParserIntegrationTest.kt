@@ -52,7 +52,7 @@ class ParserIntegrationTest: FunSpec({
                 ),
                 Function("main", Unit::class, listOf(),
                     listOf(
-                        VarDeclarationStatement("number", Float::class, FloatConstant(6.5)),
+                        VarDeclarationStatement("number", Double::class, FloatConstant(6.5)),
                         FunctionCallStatement(
                             FunctionCallExpression(
                                 "isPerfectNumber",

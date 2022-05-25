@@ -13,8 +13,12 @@ class Interpreter: Visitor() {
     // TO-CHECK fun(n, inc(n), n) -> how to do it, will the first and third n have the same value, or incremented?
     // TO-CHECK arguments should be evaluated upon function call, not declaration
 
-    fun value() {
-        print(environment)
+    internal fun value(): TypedValue {
+        return environment.pop()
+    }
+
+    internal fun setFunction(functions: List<Function>) {
+        this.functions = functions.associateBy { it.name }
     }
 
     override fun visit(visitable: Program) {

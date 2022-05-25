@@ -655,7 +655,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.FloatType.toToken(),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                ReturnStatement(CastExpression(IntConstant(1), Float::class))
+                ReturnStatement(CastExpression(IntConstant(1), Double::class))
             ).wrapInProgram(),
         ) { iterable ->
             Parser(LexerTokenIterator(iterable.first)).parse() shouldBe iterable.second
