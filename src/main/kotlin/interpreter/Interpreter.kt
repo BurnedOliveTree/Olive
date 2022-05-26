@@ -84,12 +84,12 @@ class Interpreter: Visitor() {
 
     override fun visit(visitable: NormalAssignmentStatement) {
         visit(visitable.expression)
-        environment.variableAssign(visitable.variable.name, environment.pop())
+        environment.variableAssign(visitable.variable.name, environment.pop().copy())
     }
 
     override fun visit(visitable: ReferenceAssignmentStatement) {
         visit(visitable.expression)
-        environment.variableAssign(visitable.variable.name, environment.pop()) // TODO
+        environment.variableAssign(visitable.variable.name, environment.pop())
     }
 
     override fun visit(visitable: SumAssignmentStatement) {
@@ -246,7 +246,7 @@ class Interpreter: Visitor() {
         val left = environment.pop()
         if (left::class != right::class)
             throw TypeException(environment.functionName(), right, left)
-        environment.push(TypedValue.Bool(left.value!! === right.value!!)) // TODO
+        environment.push(TypedValue.Bool(left === right))
     }
 
     override fun visit(visitable: NotExpression) {

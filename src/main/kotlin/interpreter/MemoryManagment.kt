@@ -5,12 +5,34 @@ import kotlin.reflect.KClass
 
 sealed class TypedValue {
     abstract val value: Any?
+    abstract fun copy(): TypedValue
 
-    class Int(override var value: kotlin.Int?): TypedValue()
-    class Float(override var value: Double?): TypedValue()
-    class String(override var value: kotlin.String?) : TypedValue()
-    class Bool(override var value: Boolean?) : TypedValue()
-    class Unit(override val value: kotlin.Unit? = null): TypedValue()
+    class Int(override var value: kotlin.Int?): TypedValue() {
+        override fun copy(): TypedValue {
+            return Int(this.value)
+        }
+    }
+    class Float(override var value: Double?): TypedValue() {
+        override fun copy(): TypedValue {
+            return Float(this.value)
+        }
+    }
+    class String(override var value: kotlin.String?) : TypedValue() {
+        override fun copy(): TypedValue {
+            return String(this.value)
+        }
+    }
+    class Bool(override var value: Boolean?) : TypedValue() {
+        override fun copy(): TypedValue {
+            return Bool(this.value)
+        }
+    }
+    class Unit(override val value: kotlin.Unit? = null): TypedValue() {
+        override fun copy(): TypedValue {
+            return Unit(this.value)
+        }
+    }
+
 
     companion object {
         fun Number(value: Number?): TypedValue {

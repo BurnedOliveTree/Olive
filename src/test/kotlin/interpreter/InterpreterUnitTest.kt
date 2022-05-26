@@ -43,7 +43,6 @@ class InterpreterUnitTest: FunSpec({
             TypeCheckExpression(IntConstant(1), Int::class) to true,
             TypeCheckExpression(IntConstant(1), Double::class) to false,
             NotExpression(BoolConstant(true)) to false,
-            // TODO ReferenceComparison
             NormalComparisonExpression(IntConstant(1), IntConstant(1)) to true,
             NormalComparisonExpression(FloatConstant(1.0), FloatConstant(5.0)) to false,
             AndExpression(BoolConstant(true), BoolConstant(true)) to true,
@@ -96,7 +95,18 @@ class InterpreterUnitTest: FunSpec({
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
                 NormalAssignmentStatement(Variable("sample"), IntConstant(6))
             ) to 6,
-            // TODO ReferenceAssignmentStatement
+            listOf(
+                VarDeclarationStatement("a", Int::class, IntConstant(2)),
+                VarDeclarationStatement("b", Int::class, null),
+                NormalAssignmentStatement(Variable("b"), Variable("a")),
+                VarDeclarationStatement("sample", Boolean::class, ReferenceComparisonExpression(Variable("a"), (Variable("b"))))
+            ) to false,
+            listOf(
+                VarDeclarationStatement("a", Int::class, IntConstant(2)),
+                VarDeclarationStatement("b", Int::class, null),
+                ReferenceAssignmentStatement(Variable("b"), Variable("a")),
+                VarDeclarationStatement("sample", Boolean::class, ReferenceComparisonExpression(Variable("a"), (Variable("b"))))
+            ) to true,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
                 SumAssignmentStatement(Variable("sample"), IntConstant(6))
