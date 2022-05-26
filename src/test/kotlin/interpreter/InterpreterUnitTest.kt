@@ -1,12 +1,8 @@
 package interpreter
 
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
-import lexer.CodeIterator
-import lexer.Lexer
 import parser.*
 import parser.Function
 

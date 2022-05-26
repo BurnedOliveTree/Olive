@@ -399,8 +399,7 @@ class Interpreter: Visitor() {
 
     override fun visit(visitable: InverseExpression) {
         visit(visitable.expression)
-        val value = environment.pop()
-        when (value) {
+        when (val value = environment.pop()) {
             is TypedValue.Int -> environment.push(TypedValue.Int(-value.value!!))
             is TypedValue.Float -> environment.push(TypedValue.Float(-value.value!!))
             else -> throw TypeException(environment.functionName(), Int::class.toTypedNull(), value)
