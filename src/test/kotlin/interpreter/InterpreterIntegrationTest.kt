@@ -9,7 +9,7 @@ import java.io.FileReader
 
 class InterpreterIntegrationTest: FunSpec({
     test("Should properly visit all objects") {
-        FileReader("build/resources/test/extended_sample.cat").use { file ->
+        FileReader("build/resources/test/extended_sample.olv").use { file ->
             val program = Parser(LexerIterator(Lexer(CodeIterator(file)))).parse()
             val interpreter = Interpreter()
             interpreter.setFunction(program.funDeclarations)

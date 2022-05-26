@@ -1,6 +1,6 @@
-# Vision of Felis
+# Vision of Olive
 
-This document is about vision of Felis, a strongly typed language that is being created for the purpose of the project from TKOM.
+This document is about vision of Olive, a strongly typed language that is being created for the purpose of the project from TKOM.
 
 ## Functionality
 

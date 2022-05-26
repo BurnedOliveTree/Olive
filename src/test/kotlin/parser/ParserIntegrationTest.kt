@@ -66,7 +66,7 @@ class ParserIntegrationTest: FunSpec({
             ),
             emptyList()
         )
-        FileReader("build/resources/test/sample.cat").use { file ->
+        FileReader("build/resources/test/sample.olv").use { file ->
             val parser = Parser(LexerIterator(Lexer(CodeIterator(file))))
             program shouldBe parser.parse()
         }

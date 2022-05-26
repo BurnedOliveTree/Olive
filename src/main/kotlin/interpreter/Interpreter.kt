@@ -459,7 +459,6 @@ class Interpreter: Visitor() {
     }
 
     override fun visit(visitable: Variable) {
-        println(visitable)
         environment.push(environment.variableValue(visitable.name))
     }
 

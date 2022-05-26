@@ -84,7 +84,7 @@ class LexerIntegrationTest: FunSpec({
             LexerToken(TokenType.EndSign, null, 15, 35),
             LexerToken(TokenType.RightBraceSign, null, 16, 1)
         )
-        FileReader("build/resources/test/sample.cat").use { file ->
+        FileReader("build/resources/test/sample.olv").use { file ->
             val lexer = Lexer(CodeIterator(file))
 
             tokens.forEach {
