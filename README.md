@@ -72,7 +72,7 @@ This document is about Olive, a strongly typed language that was created for the
     - (all the arithmetic operators combined with =)
 - Other
     - () (function call, expression prioritisation)
-    - infix . (function call, method call, attribute)
+    - infix . (function call with preceding expression as first argument)
     - infix ,
 
 ### Syntax
@@ -124,8 +124,34 @@ isPerfectNumber(number: Int): Bool {
     return count == number;
 }
 
+isPrime(number: Int): Bool {
+    var root: Int = (number | 2) as Int;
+    if (number == 1) { return false; }
+    if (number == 2) { return true; }
+    if (number % 2 == 0) { return false; }
+    var iterator: Int = 3;
+    while (iterator <= root) {
+        if (number % iterator == 0) { return false; }
+        iterator += 2;
+    }
+    return true;
+}
+
+add(first: Int, second: Int): Int {
+    return first + second;
+}
+
+subtract(first: Int, second: Int): Int {
+    return first - second;
+}
+
+multiply(first: Int, second: Int): Int {
+    return first * second;
+}
+
 main(): Unit {
     var number: Float = 6.5;
+    isPrime((number as Int).add(2).multiply(7).subtract(1));
     isPerfectNumber(number as Int);
 }
 ```
@@ -136,30 +162,31 @@ Variables and functions have to have their type explicitly stated.
 
 Variables are automatically destroyed when all their references are deleted.
 
-Language has no classes, so there will be no access modificators (const, public, private, etc.)
+Language has no classes, so there is no access modificators (const, public, private, etc.)
 
-There will be a `main` function, and all the user functions will have to be defined above it (there will be no nested functions).
+There must be a user-defined `main` function, and all other user functions have to be defined above or below it (there are no nested functions).
 
 ## Implementation method
 
-There will be a mutable map of function names (plus argument and return types) to function code. I'm thinking about simply joining these together as Strings. For example, `fun f(a: Int, b: Float): String` as a "fStringIntFloat".
+Interpreter has a map of function names to function definitions, as well as an instance of Environment class.
 
-Variables similarly will be kept in a map of variable names to variable objects. These objects will hold it's value, type, and a set of names of cells.
+Functions map is instanced upon visiting of Program object (a product of Parser.parse()). Visiting any other parser object directly (statements, expressions, etc.) will result in undefined behaviour.
 
-Upon variable / function declaration, the name will be checked if it is already present in map keys. If it is, the declaration will be declared as an error to the user.
+All values are kept in the Environment object, which has two attributes: stack, that holds all recently calculated values in a Stack, and a functionCallStack, that is a stack of CallContext objects, which hold a stack of Scopes, which finally hold the variables. Variable values are searched for in the latest CallContext (since there are no global variables), starting from the latest Scope. After the interpreter leaves the scope, so does the variables declared in this scope.
 
-Since there is no inheritance, a function `fun f(x: Number): Number`, given that in a call the `x` is an Int, will firstly be searched under "fIntNumber" and if that fails, than it will be searched under "fNumberNumber".
+// TODO
+Upon variable / function declaration, the name will be checked if it is already present in the Environment. If it is, the declaration will be declared as an error to the user.
 
-On file execution, interpreter will look for a function named `main`, and execute the code present inside. All the user defined functions will have to be declared above `main`. In case of our spreadsheet application, `main` will contain all cell declarations and assignments, and user will be able to declare his/her functions in a special area besides the table.
+On file execution, interpreter is looking for a function named `main`, and visit it.
 
 ## Error handling
 
-Since the only non-structural operations in Kotlin are return, break, continue and throw, I will make my own classes inheriting from Exception, and simply use the preexisiting `throw` in Kotlin. I will wrap the pre-existing exceptions that may occur (like the error that occurs on division by 0) into these classes.
+Since the only non-structural operations in Kotlin are return, break, continue and throw, I will make my own classes inheriting from Exception, and simply use the preexisting `throw` in Kotlin. I've wrapped the preexisting exceptions that may occur (like the error that occurs on division by 0) into these classes. // TODO
 
 ## How to run
 
-Since Kotlin by default compiles to Java bytecode, I will pack the lexer, parser and interpreter into a single jar file, that will be runnable with the `java -jar` command. To work, this
+Since Kotlin by default compiles to Java bytecode, I have packed the lexer, parser and interpreter into a single jar file, that is runnable with the `java -jar` command. To work, this // TODO
 
 ## Testing
 
-There will be unit tests for each keyword and operator, checking if they work as intented, and there also will be integration tests: one with a happy-path, with some sort of algorithm, for example a is a number a perfect number, checking if all the components will work as intended, and a few bad-path, which will have improper syntax written in them, and check that our compiler will also correctly respond to that situation.
+There are unit tests for each keyword and operator, checking if they work as intended, and there is also a few integration tests with some sort of algorithm, for example: is "number" a perfect number, checking if all the components are working as intended.
