@@ -180,11 +180,22 @@ On file execution, interpreter is looking for a function named `main`, and visit
 
 ## Error handling
 
-Since the only non-structural operations in Kotlin are return, break, continue and throw, I will make my own classes inheriting from Exception, and simply use the preexisting `throw` in Kotlin. I've wrapped the preexisting exceptions that may occur (like the error that occurs on division by 0) into these classes. // TODO
+Since the only non-structural operations in Kotlin are return, break, continue and throw, I will make my own classes inheriting from Exception, and simply use the preexisting `throw` in Kotlin. Some examples of error-prone code is trying to add Strings, declaring the same variable twice, not defining main or the function that is being called.
 
 ## How to run
 
-Since Kotlin by default compiles to Java bytecode, I have packed the lexer, parser and interpreter into a single jar file, that is runnable with the `java -jar` command. To work, this // TODO
+Since Kotlin by default compiles to Java bytecode, I have packed the lexer, parser and interpreter into a single jar file, that is runnable with the `java -jar` command. To work, this requires Java 11 JRE preinstalled on the system.
+
+**To build:**
+If you have Gradle and a JDK on your computer, you can build a jar with:
+```shell
+./gradlew jar
+```
+
+**To run:** (for example, with a file located in ./src/main)
+```shell
+java -jar Olive-1.0.0.jar ./src/main/main.olv
+```
 
 ## Testing
 
