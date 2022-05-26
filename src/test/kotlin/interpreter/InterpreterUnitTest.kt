@@ -1,11 +1,14 @@
 package interpreter
 
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.withData
 import io.kotest.matchers.shouldBe
 import lexer.CodeIterator
 import lexer.Lexer
 import parser.*
+import parser.Function
 
 class InterpreterUnitTest: FunSpec({
     context("expressions tests") {
@@ -55,6 +58,7 @@ class InterpreterUnitTest: FunSpec({
             interpreter.environment.pop().value shouldBe expression.second
         }
     }
+
     context("statements tests") {
         withData(
             nameFn = { "Object \"$it\"" },
@@ -140,6 +144,43 @@ class InterpreterUnitTest: FunSpec({
             interpreter.environment.functionCall("main")
             statement.first.forEach { interpreter.visit(it) }
             interpreter.environment.variableValue("sample").value shouldBe statement.second
+        }
+    }
+
+    context("unhappy path tests") {
+        withData(
+            nameFn = { "Object \"$it\"" },
+            listOf(
+                NormalAssignmentStatement(Variable("sample"), IntConstant(0))
+            ) to MissingDeclarationException::class,
+            listOf(
+                VarDeclarationStatement("sample", String::class, null),
+                VarDeclarationStatement("sample2", String::class, null),
+                NormalAssignmentStatement(Variable("sample2"), Variable("sample"))
+            ) to MissingDeclarationException::class,
+            listOf(
+                VarDeclarationStatement("sample", String::class, StringConstant("sample")),
+                VarDeclarationStatement("sample2", Int::class, IntConstant(0)),
+                NormalAssignmentStatement(Variable("sample2"), Variable("sample"))
+            ) to TypeException::class,
+            listOf(
+                VarDeclarationStatement("sample", String::class, IntConstant(0))
+            ) to TypeException::class,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(2)),
+                SumAssignmentStatement(Variable("sample"), FloatConstant(10.0))
+            ) to TypeException::class,
+            listOf(
+                FunctionCallStatement(FunctionCallExpression("sample", listOf()))
+            ) to MissingDeclarationException::class,
+        ) { statement ->
+            val interpreter = Interpreter()
+            interpreter.environment.functionCall("main")
+            try {
+                statement.first.forEach { interpreter.visit(it) }
+            } catch (e: SemanticsError) {
+                e::class shouldBe statement.second
+            }
         }
     }
 })

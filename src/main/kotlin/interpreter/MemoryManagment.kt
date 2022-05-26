@@ -62,20 +62,17 @@ class Scope {
     fun declare(name: String, type: KClass<out Any>, value: TypedValue?, functionName: String) {
         if (value != null)
             if (value.value!!::class != type)
-                throw TypeException(functionName, variables[name]!!, value)
+                throw TypeException(functionName, type.toTypedNull(), value)
         variables[name] = value ?: type.toTypedNull()
-        println(variables.forEach { print(it.key to it.value.value) })
     }
 
     fun assign(name: String, value: TypedValue, functionName: String) {
         if (value::class != variables[name]!!::class)
             throw TypeException(functionName, variables[name]!!, value)
         variables[name] = value
-        println(variables.forEach { print(it.key to it.value.value) })
     }
 
     fun value(name: String): TypedValue? {
-        println(variables.forEach { print(it.key to it.value.value) })
         return variables[name]
     }
 
