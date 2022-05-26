@@ -178,6 +178,8 @@ Upon variable / function declaration, the name is checked if it is already prese
 
 On file execution, interpreter is looking for a function named `main`, and visit it.
 
+A recursive descendant parser was used in the project for syntax, and so the grammar was accordingly checked for any collisions.
+
 ## Error handling
 
 Since the only non-structural operations in Kotlin are return, break, continue and throw, I will make my own classes inheriting from Exception, and simply use the preexisting `throw` in Kotlin. Some examples of error-prone code is trying to add Strings, declaring the same variable twice, not defining main or the function that is being called.
