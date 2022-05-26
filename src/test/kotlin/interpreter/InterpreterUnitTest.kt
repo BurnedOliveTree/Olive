@@ -175,6 +175,7 @@ class InterpreterUnitTest: FunSpec({
             ) to MissingDeclarationException::class,
         ) { statement ->
             val interpreter = Interpreter()
+            interpreter.setFunction(listOf(Function("main", Unit::class, listOf(), listOf())))
             interpreter.environment.functionCall("main")
             try {
                 statement.first.forEach { interpreter.visit(it) }
