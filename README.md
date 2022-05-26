@@ -174,8 +174,7 @@ Functions map is instanced upon visiting of Program object (a product of Parser.
 
 All values are kept in the Environment object, which has two attributes: stack, that holds all recently calculated values in a Stack, and a functionCallStack, that is a stack of CallContext objects, which hold a stack of Scopes, which finally hold the variables. Variable values are searched for in the latest CallContext (since there are no global variables), starting from the latest Scope. After the interpreter leaves the scope, so does the variables declared in this scope.
 
-// TODO
-Upon variable / function declaration, the name will be checked if it is already present in the Environment. If it is, the declaration will be declared as an error to the user.
+Upon variable / function declaration, the name is checked if it is already present in the Environment. If it is, the declaration will be declared as an error to the user.
 
 On file execution, interpreter is looking for a function named `main`, and visit it.
 

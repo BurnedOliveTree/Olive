@@ -143,7 +143,7 @@ class InterpreterUnitTest: FunSpec({
         }
     }
 
-    context("unhappy path tests") {
+    context("unhappy path statement tests") {
         withData(
             nameFn = { "Object \"$it\"" },
             listOf(
@@ -169,12 +169,37 @@ class InterpreterUnitTest: FunSpec({
             listOf(
                 FunctionCallStatement(FunctionCallExpression("sample", listOf()))
             ) to MissingDeclarationException::class,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(2)),
+                VarDeclarationStatement("sample", Int::class, IntConstant(4))
+            ) to ConflictingDeclarationException::class,
         ) { statement ->
             val interpreter = Interpreter()
             interpreter.setFunction(listOf(Function("main", Unit::class, listOf(), listOf())))
             interpreter.environment.functionCall("main")
             try {
                 statement.first.forEach { interpreter.visit(it) }
+            } catch (e: SemanticsError) {
+                e::class shouldBe statement.second
+            }
+        }
+    }
+
+    context("unhappy path function definition tests") {
+        withData(
+            nameFn = { "Object \"$it\"" },
+            listOf(
+                Function("main", Int::class, listOf(), listOf()),
+                Function("sample", Int::class, listOf(), listOf()),
+                Function("sample", Int::class, listOf(), listOf())
+            ) to ConflictingDeclarationException::class,
+            listOf(
+                Function("sample", Int::class, listOf(), listOf())
+            ) to MissingDeclarationException::class,
+        ) { statement ->
+            val interpreter = Interpreter()
+            try {
+                interpreter.setFunction(statement.first)
             } catch (e: SemanticsError) {
                 e::class shouldBe statement.second
             }

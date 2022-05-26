@@ -14,11 +14,14 @@ class Interpreter: Visitor() {
     // TO-CHECK arguments should be evaluated upon function call, not declaration
 
     internal fun setFunction(functions: List<Function>) {
+        val duplicates = functions.groupBy { it.name }.filter { it.value.size > 1 }
+        if (duplicates.isNotEmpty())
+            throw ConflictingDeclarationException(duplicates.keys.first(), duplicates.keys.first())
         this.functions = functions.associateBy { it.name }
     }
 
     override fun visit(visitable: Program) {
-        functions = visitable.funDeclarations.associateBy { it.name }
+        setFunction(visitable.funDeclarations)
         visit(functions["main"] ?: throw MissingDeclarationException("given program", "main"))
     }
 

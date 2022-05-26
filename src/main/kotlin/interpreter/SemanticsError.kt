@@ -11,3 +11,8 @@ class TypeException(currentFunction: String, private val exceptedTypedValue: Typ
     override val message: String
         get() = "error occurred in $currentFunction: expected a value of ${exceptedTypedValue.value!!::class}, got ${actualTypedValue.value!!::class} instead"
 }
+
+class ConflictingDeclarationException(currentFunction: String, private val conflictingName: String): SemanticsError(currentFunction) {
+    override val message: String
+        get() = "error occurred in $currentFunction: found a redeclaration of $conflictingName"
+}

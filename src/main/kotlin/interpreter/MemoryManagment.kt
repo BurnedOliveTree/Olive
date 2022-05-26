@@ -86,6 +86,8 @@ class CallContext(val name: String) {
     var returnFlag = false
 
     fun declare(name: String, type: KClass<out Any>, value: TypedValue?, functionName: String) {
+        if (scopes.last().isPresent(name))
+            throw ConflictingDeclarationException(functionName, name)
         scopes.last().declare(name, type, value, functionName)
     }
 
