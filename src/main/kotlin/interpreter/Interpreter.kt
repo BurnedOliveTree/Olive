@@ -8,11 +8,6 @@ class Interpreter: Visitor() {
     private lateinit var functions: Map<String, Function>
     internal val environment = Environment()
 
-    // TO-CHECK if (false and average()) -> average should not be called
-    // TO-CHECK optimization?
-    // TO-CHECK fun(n, inc(n), n) -> how to do it, will the first and third n have the same value, or incremented?
-    // TO-CHECK arguments should be evaluated upon function call, not declaration
-
     internal fun setFunction(functions: List<Function>) {
         val duplicates = functions.groupBy { it.name }.filter { it.value.size > 1 }
         if (duplicates.isNotEmpty())
@@ -210,26 +205,36 @@ class Interpreter: Visitor() {
 
     override fun visit(visitable: OrExpression) {
         visit(visitable.left)
-        visit(visitable.right)
-        val right = environment.pop()
         val left = environment.pop()
         if (left !is TypedValue.Bool)
-            throw TypeException(environment.functionName(), TypedValue.Bool(null), left)
-        if (right !is TypedValue.Bool)
-            throw TypeException(environment.functionName(), TypedValue.Bool(null), right)
-        environment.push(TypedValue.Bool(left.value!! || right.value!!))
+            throw TypeException(environment.functionName(), Boolean::class.toTypedNull(), left)
+        else
+            if (left.value!!) {
+                environment.push(TypedValue.Bool(true))
+            } else {
+                visit(visitable.right)
+                val right = environment.pop()
+                if (right !is TypedValue.Bool)
+                    throw TypeException(environment.functionName(), Boolean::class.toTypedNull(), right)
+                environment.push(TypedValue.Bool(right.value!!))
+            }
     }
 
     override fun visit(visitable: AndExpression) {
         visit(visitable.left)
-        visit(visitable.right)
-        val right = environment.pop()
         val left = environment.pop()
         if (left !is TypedValue.Bool)
-            throw TypeException(environment.functionName(), TypedValue.Bool(null), left)
-        if (right !is TypedValue.Bool)
-            throw TypeException(environment.functionName(), TypedValue.Bool(null), right)
-        environment.push(TypedValue.Bool(left.value!! && right.value!!))
+            throw TypeException(environment.functionName(), Boolean::class.toTypedNull(), left)
+        else
+            if (!left.value!!) {
+                environment.push(TypedValue.Bool(false))
+            } else {
+                visit(visitable.right)
+                val right = environment.pop()
+                if (right !is TypedValue.Bool)
+                    throw TypeException(environment.functionName(), Boolean::class.toTypedNull(), right)
+                environment.push(TypedValue.Bool(right.value!!))
+            }
     }
 
     override fun visit(visitable: NormalComparisonExpression) {
@@ -482,7 +487,6 @@ class Interpreter: Visitor() {
     }
 
     internal fun visit(visitable: Statement) {
-        // TODO fix this
         when (visitable) {
             is VarDeclarationStatement -> visit(visitable)
             is IfStatement -> visit(visitable)
@@ -502,7 +506,6 @@ class Interpreter: Visitor() {
     }
 
     internal fun visit(visitable: Expression) {
-        // TODO fix this
         when (visitable) {
             is OrExpression -> visit(visitable)
             is AndExpression -> visit(visitable)
