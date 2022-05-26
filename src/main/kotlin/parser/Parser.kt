@@ -475,23 +475,36 @@ class Parser(private val iterator: BaseLexerIterator) {
             return null
     }
 
-    // '(' arguments ')' (MemberOfSign Identifier '(' arguments ')')*;
+    // (('(' arguments ')') chainFunCall*) | chainFunCall+;
     private fun parseRestOfFunctionCall(name: String): FunctionCallExpression? {
-        if (!isTokenTypeThenConsume(TokenType.LeftParenthesesSign)) { return null }
-        var arguments = parseArguments()
-        ifTokenTypeThenConsumeElseException(TokenType.RightParenthesesSign, this::parseRestOfFunctionCall.name)
-        var functionCallExpression = FunctionCallExpression(name, arguments)
-        while (isTokenTypeThenConsume(TokenType.MemberReferenceSign)) {
-            if (!isTokenType(TokenType.Identifier))
-                throw ExpectedOtherTokenException(iterator.current(), this::parseRestOfFunctionCall.name, "identifier")
-            val newName = iterator.current().value as String
-            iterator.next()
-            ifTokenTypeThenConsumeElseException(TokenType.LeftParenthesesSign, this::parseRestOfFunctionCall.name)
-            arguments = parseArguments()
+        var functionCallExpression = if (isTokenTypeThenConsume(TokenType.LeftParenthesesSign)) {
+            val arguments = parseArguments()
             ifTokenTypeThenConsumeElseException(TokenType.RightParenthesesSign, this::parseRestOfFunctionCall.name)
-            functionCallExpression = FunctionCallExpression(newName, (arguments.toList() + functionCallExpression).toList())
+            FunctionCallExpression(name, arguments)
+        } else {
+            if (isTokenTypeThenConsume(TokenType.MemberReferenceSign))
+                parseChainCall(Variable(name))
+                    ?: throw ExpectedOtherTokenException(iterator.current(), this::parseRestOfFunctionCall.name, "identifier")
+            else
+                return null
+        }
+        while (isTokenTypeThenConsume(TokenType.MemberReferenceSign)) {
+            functionCallExpression = parseChainCall(functionCallExpression)
+                ?: throw ExpectedOtherTokenException(iterator.current(), this::parseRestOfFunctionCall.name, "identifier")
         }
         return functionCallExpression
+    }
+
+    // (MemberOfSign Identifier '(' arguments ')');
+    private fun parseChainCall(expression: Expression): FunctionCallExpression? {
+        if (!isTokenType(TokenType.Identifier))
+            return null
+        val newName = iterator.current().value as String
+        iterator.next()
+        ifTokenTypeThenConsumeElseException(TokenType.LeftParenthesesSign, this::parseChainCall.name)
+        val arguments = parseArguments()
+        ifTokenTypeThenConsumeElseException(TokenType.RightParenthesesSign, this::parseChainCall.name)
+        return FunctionCallExpression(newName, (arguments.toList() + expression).toList())
     }
 
     // (expression (EnumerationSign expression)*)?;

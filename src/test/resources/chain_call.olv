@@ -2,15 +2,19 @@ add(first: Int, second: Int): Int {
     return first + second;
 }
 
+subtract(first: Int, second: Int): Int {
+    return first - second;
+}
+
 multiply(first: Int, second: Int): Int {
     return first * second;
 }
 
 chainCall(number: Int): Int {
-    return add(number, 2).multiply(7).add(-1);
+    return number.add(2).multiply(7).subtract(1);
 }
 
 main(): Unit {
     var number: Int = 6;
-    add(number, 2).multiply(7).add(-1);
+    number.add(2).multiply(7).subtract(1);
 }

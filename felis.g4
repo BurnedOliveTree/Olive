@@ -71,7 +71,8 @@ WhiteSpace:         [ \t\r\n]+ -> skip; // skip whitespaces
 /// rules
 
 arguments:          (expression (EnumerationSign expression)*)?;
-restOfFunCall:      '(' arguments ')' (MemberOfSign Identifier '(' arguments ')')*;
+chainFunCall:       MemberOfSign Identifier '(' arguments ')';
+restOfFunCall:      ('(' arguments ')' chainFunCall*) | chainFunCall+;
 
 expressionPiece:    (Identifier restOfFunCall?) | Constant | ('(' expression ')');
 castExpression:     expressionPiece (CastOp Type)?;
