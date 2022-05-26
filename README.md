@@ -1,6 +1,6 @@
-# Vision of Olive
+# Olive
 
-This document is about vision of Olive, a strongly typed language that is being created for the purpose of the project from TKOM.
+This document is about Olive, a strongly typed language that was created for the purpose of the project from TKOM (pol. *Techniki Kompilacji*, en. *Compilation Techniques*).
 
 ## Functionality
 
@@ -14,13 +14,13 @@ This document is about vision of Olive, a strongly typed language that is being 
         - Boolean
 - Variable and function names can be created from letters and underscore characters
     - Variables and functions can't be named the same as keywords
-    - Variables and functions can't have the same name, but functions themselves can have the same name, if they differ in terms of their argument and return types
+    - Variables and functions can have the same name, but functions themselves can't have the same names
 - Function f declared as ```fun f(a: Int, b: Int) {}``` can be called by:
     - f(a, b)
     - a.f(b)
 - All variables are references to mutable objects
     - That's why there is an operator copying the value of the object "=", and an operator copying only the reference "&="
-- All expressions must be put inside a function
+- All statements must be put inside a function
 
 ## Specification
 
