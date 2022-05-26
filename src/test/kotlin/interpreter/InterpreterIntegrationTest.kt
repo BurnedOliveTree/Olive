@@ -14,13 +14,13 @@ class InterpreterIntegrationTest: FunSpec({
             val interpreter = Interpreter()
             interpreter.setFunction(program.funDeclarations)
             interpreter.visit(FunctionCallExpression("isPrime", listOf(IntConstant(7))))
-            interpreter.value().value shouldBe true
+            interpreter.environment.pop().value shouldBe true
             interpreter.visit(FunctionCallExpression("isPrime", listOf(IntConstant(6))))
-            interpreter.value().value shouldBe false
+            interpreter.environment.pop().value shouldBe false
             interpreter.visit(FunctionCallExpression("isPerfectNumber", listOf(IntConstant(7))))
-            interpreter.value().value shouldBe false
+            interpreter.environment.pop().value shouldBe false
             interpreter.visit(FunctionCallExpression("isPerfectNumber", listOf(IntConstant(6))))
-            interpreter.value().value shouldBe true
+            interpreter.environment.pop().value shouldBe true
         }
     }
 })

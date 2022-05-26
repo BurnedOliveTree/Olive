@@ -53,7 +53,83 @@ class InterpreterUnitTest: FunSpec({
         ) { expression ->
             val interpreter = Interpreter()
             interpreter.visit(expression.first)
-            interpreter.value().value shouldBe expression.second
+            interpreter.environment.pop().value shouldBe expression.second
+        }
+    }
+    context("statements tests") {
+        withData(
+            nameFn = { "Object \"$it\"" },
+            listOf(VarDeclarationStatement("sample", String::class, StringConstant("sample"))) to "sample",
+            listOf(VarDeclarationStatement("sample", Int::class, IntConstant(1))) to 1,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, null),
+                IfStatement(
+                    BoolConstant(true),
+                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(2))),
+                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(3)))
+                )
+            ) to 2,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, null),
+                IfStatement(
+                    BoolConstant(false),
+                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(2))),
+                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(3)))
+                )
+            ) to 3,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, null),
+                IfStatement(
+                    BoolConstant(false),
+                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(2))),
+                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(3)))
+                )
+            ) to 3,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(0)),
+                WhileStatement(
+                    LesserThanExpression(Variable("sample"), IntConstant(5)),
+                    listOf(SumAssignmentStatement(Variable("sample"), IntConstant(2)))
+                )
+            ) to 6,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(2)),
+                NormalAssignmentStatement(Variable("sample"), IntConstant(6))
+            ) to 6,
+            // TODO ReferenceAssignmentStatement
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(2)),
+                SumAssignmentStatement(Variable("sample"), IntConstant(6))
+            ) to 8,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(2)),
+                DifferenceAssignmentStatement(Variable("sample"), IntConstant(6))
+            ) to -4,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(2)),
+                MultiplicationAssignmentStatement(Variable("sample"), IntConstant(6))
+            ) to 12,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(2)),
+                DivisionAssignmentStatement(Variable("sample"), IntConstant(6))
+            ) to 0,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(2)),
+                ModuloAssignmentStatement(Variable("sample"), IntConstant(6))
+            ) to 2,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(2)),
+                ExponentAssignmentStatement(Variable("sample"), IntConstant(6))
+            ) to 64,
+            listOf(
+                VarDeclarationStatement("sample", Int::class, IntConstant(2)),
+                RootAssignmentStatement(Variable("sample"), IntConstant(6))
+            ) to 1,
+        ) { statement ->
+            val interpreter = Interpreter()
+            interpreter.environment.functionCall("main")
+            statement.first.forEach { interpreter.visit(it) }
+            interpreter.environment.variableValue("sample").value shouldBe statement.second
         }
     }
 })

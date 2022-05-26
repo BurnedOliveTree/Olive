@@ -46,7 +46,7 @@ class Scope {
     }
 
     fun assign(name: String, value: TypedValue, functionName: String) {
-        if (value.value!!::class != variables[name]!!.value!!::class)
+        if (value::class != variables[name]!!::class)
             throw TypeException(functionName, variables[name]!!, value)
         variables[name] = value
         println(variables.forEach { print(it.key to it.value.value) })
