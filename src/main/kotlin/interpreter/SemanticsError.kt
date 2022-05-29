@@ -16,3 +16,8 @@ class ConflictingDeclarationException(currentFunction: String, private val confl
     override val message: String
         get() = "error occurred in $currentFunction: found a redeclaration of $conflictingName"
 }
+
+class IllegalOperationException(currentFunction: String, private val operation: String): SemanticsError(currentFunction) {
+    override val message: String
+        get() = "error occurred in $currentFunction: tried to execute an illegal operation: $operation"
+}
