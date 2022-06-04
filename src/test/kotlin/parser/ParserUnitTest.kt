@@ -201,7 +201,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntConstant.toToken(0),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                SumAssignmentStatement(Variable("variable"), IntConstant(0))
+                SumAssignmentStatement(VariableReference("variable"), IntConstant(0))
             ).wrapInProgram(),
             listOf(
                 TokenType.Identifier.toToken("variable"),
@@ -209,7 +209,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntConstant.toToken(1),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                DifferenceAssignmentStatement(Variable("variable"), IntConstant(1))
+                DifferenceAssignmentStatement(VariableReference("variable"), IntConstant(1))
             ).wrapInProgram(),
             listOf(
                 TokenType.Identifier.toToken("variable"),
@@ -217,7 +217,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntConstant.toToken(2),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                MultiplicationAssignmentStatement(Variable("variable"), IntConstant(2))
+                MultiplicationAssignmentStatement(VariableReference("variable"), IntConstant(2))
             ).wrapInProgram(),
             listOf(
                 TokenType.Identifier.toToken("variable"),
@@ -225,7 +225,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntConstant.toToken(3),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                DivisionAssignmentStatement(Variable("variable"), IntConstant(3))
+                DivisionAssignmentStatement(VariableReference("variable"), IntConstant(3))
             ).wrapInProgram(),
             listOf(
                 TokenType.Identifier.toToken("variable"),
@@ -233,7 +233,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntConstant.toToken(4),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                ModuloAssignmentStatement(Variable("variable"), IntConstant(4))
+                ModuloAssignmentStatement(VariableReference("variable"), IntConstant(4))
             ).wrapInProgram(),
             listOf(
                 TokenType.Identifier.toToken("variable"),
@@ -241,7 +241,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntConstant.toToken(5),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                ExponentAssignmentStatement(Variable("variable"), IntConstant(5))
+                ExponentAssignmentStatement(VariableReference("variable"), IntConstant(5))
             ).wrapInProgram(),
             listOf(
                 TokenType.Identifier.toToken("variable"),
@@ -249,7 +249,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntConstant.toToken(6),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                RootAssignmentStatement(Variable("variable"), IntConstant(6))
+                RootAssignmentStatement(VariableReference("variable"), IntConstant(6))
             ).wrapInProgram(),
             listOf(
                 TokenType.Identifier.toToken("variable"),
@@ -257,7 +257,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntConstant.toToken(7),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                NormalAssignmentStatement(Variable("variable"), IntConstant(7))
+                NormalAssignmentStatement(VariableReference("variable"), IntConstant(7))
             ).wrapInProgram(),
             listOf(
                 TokenType.Identifier.toToken("variable"),
@@ -265,7 +265,7 @@ class ParserUnitTest: FunSpec({
                 TokenType.IntConstant.toToken(8),
                 TokenType.EndSign.toToken()
             ).wrapInProgram() to listOf(
-                ReferenceAssignmentStatement(Variable("variable"), IntConstant(8))
+                ReferenceAssignmentStatement(VariableReference("variable"), IntConstant(8))
             ).wrapInProgram(),
         ) { iterable ->
             Parser(LexerTokenIterator(iterable.first)).parse() shouldBe iterable.second

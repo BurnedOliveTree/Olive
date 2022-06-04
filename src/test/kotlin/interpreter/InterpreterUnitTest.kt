@@ -64,76 +64,76 @@ class InterpreterUnitTest: FunSpec({
                 VarDeclarationStatement("sample", Int::class, null),
                 IfStatement(
                     BoolConstant(true),
-                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(2))),
-                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(3)))
+                    listOf(NormalAssignmentStatement(VariableReference("sample"), IntConstant(2))),
+                    listOf(NormalAssignmentStatement(VariableReference("sample"), IntConstant(3)))
                 )
             ) to 2,
             listOf(
                 VarDeclarationStatement("sample", Int::class, null),
                 IfStatement(
                     BoolConstant(false),
-                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(2))),
-                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(3)))
+                    listOf(NormalAssignmentStatement(VariableReference("sample"), IntConstant(2))),
+                    listOf(NormalAssignmentStatement(VariableReference("sample"), IntConstant(3)))
                 )
             ) to 3,
             listOf(
                 VarDeclarationStatement("sample", Int::class, null),
                 IfStatement(
                     BoolConstant(false),
-                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(2))),
-                    listOf(NormalAssignmentStatement(Variable("sample"), IntConstant(3)))
+                    listOf(NormalAssignmentStatement(VariableReference("sample"), IntConstant(2))),
+                    listOf(NormalAssignmentStatement(VariableReference("sample"), IntConstant(3)))
                 )
             ) to 3,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(0)),
                 WhileStatement(
-                    LesserThanExpression(Variable("sample"), IntConstant(5)),
-                    listOf(SumAssignmentStatement(Variable("sample"), IntConstant(2)))
+                    LesserThanExpression(VariableReference("sample"), IntConstant(5)),
+                    listOf(SumAssignmentStatement(VariableReference("sample"), IntConstant(2)))
                 )
             ) to 6,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
-                NormalAssignmentStatement(Variable("sample"), IntConstant(6))
+                NormalAssignmentStatement(VariableReference("sample"), IntConstant(6))
             ) to 6,
             listOf(
                 VarDeclarationStatement("a", Int::class, IntConstant(2)),
                 VarDeclarationStatement("b", Int::class, null),
-                NormalAssignmentStatement(Variable("b"), Variable("a")),
-                VarDeclarationStatement("sample", Boolean::class, ReferenceComparisonExpression(Variable("a"), (Variable("b"))))
+                NormalAssignmentStatement(VariableReference("b"), VariableReference("a")),
+                VarDeclarationStatement("sample", Boolean::class, ReferenceComparisonExpression(VariableReference("a"), (VariableReference("b"))))
             ) to false,
             listOf(
                 VarDeclarationStatement("a", Int::class, IntConstant(2)),
                 VarDeclarationStatement("b", Int::class, null),
-                ReferenceAssignmentStatement(Variable("b"), Variable("a")),
-                VarDeclarationStatement("sample", Boolean::class, ReferenceComparisonExpression(Variable("a"), (Variable("b"))))
+                ReferenceAssignmentStatement(VariableReference("b"), VariableReference("a")),
+                VarDeclarationStatement("sample", Boolean::class, ReferenceComparisonExpression(VariableReference("a"), (VariableReference("b"))))
             ) to true,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
-                SumAssignmentStatement(Variable("sample"), IntConstant(6))
+                SumAssignmentStatement(VariableReference("sample"), IntConstant(6))
             ) to 8,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
-                DifferenceAssignmentStatement(Variable("sample"), IntConstant(6))
+                DifferenceAssignmentStatement(VariableReference("sample"), IntConstant(6))
             ) to -4,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
-                MultiplicationAssignmentStatement(Variable("sample"), IntConstant(6))
+                MultiplicationAssignmentStatement(VariableReference("sample"), IntConstant(6))
             ) to 12,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
-                DivisionAssignmentStatement(Variable("sample"), IntConstant(6))
+                DivisionAssignmentStatement(VariableReference("sample"), IntConstant(6))
             ) to 0,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
-                ModuloAssignmentStatement(Variable("sample"), IntConstant(6))
+                ModuloAssignmentStatement(VariableReference("sample"), IntConstant(6))
             ) to 2,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
-                ExponentAssignmentStatement(Variable("sample"), IntConstant(6))
+                ExponentAssignmentStatement(VariableReference("sample"), IntConstant(6))
             ) to 64,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
-                RootAssignmentStatement(Variable("sample"), IntConstant(6))
+                RootAssignmentStatement(VariableReference("sample"), IntConstant(6))
             ) to 1,
         ) { statement ->
             val interpreter = Interpreter()
@@ -147,24 +147,24 @@ class InterpreterUnitTest: FunSpec({
         withData(
             nameFn = { "Object \"$it\"" },
             listOf(
-                NormalAssignmentStatement(Variable("sample"), IntConstant(0))
+                NormalAssignmentStatement(VariableReference("sample"), IntConstant(0))
             ) to MissingDeclarationException::class,
             listOf(
                 VarDeclarationStatement("sample", String::class, null),
                 VarDeclarationStatement("sample2", String::class, null),
-                NormalAssignmentStatement(Variable("sample2"), Variable("sample"))
+                NormalAssignmentStatement(VariableReference("sample2"), VariableReference("sample"))
             ) to MissingDeclarationException::class,
             listOf(
                 VarDeclarationStatement("sample", String::class, StringConstant("sample")),
                 VarDeclarationStatement("sample2", Int::class, IntConstant(0)),
-                NormalAssignmentStatement(Variable("sample2"), Variable("sample"))
+                NormalAssignmentStatement(VariableReference("sample2"), VariableReference("sample"))
             ) to TypeException::class,
             listOf(
                 VarDeclarationStatement("sample", String::class, IntConstant(0))
             ) to TypeException::class,
             listOf(
                 VarDeclarationStatement("sample", Int::class, IntConstant(2)),
-                SumAssignmentStatement(Variable("sample"), FloatConstant(10.0))
+                SumAssignmentStatement(VariableReference("sample"), FloatConstant(10.0))
             ) to TypeException::class,
             listOf(
                 FunctionCallStatement(FunctionCallExpression("sample", listOf()))

@@ -10,9 +10,13 @@ fun main(args: Array<String>) {
         throw IllegalArgumentException("File name must be specified!")
 
     FileReader(args[0]).use {
-        val lexer = Lexer(CodeIterator(it))
-        val parser = Parser(LexerIterator(lexer))
-        val interpreter = Interpreter()
-        interpreter.visit(parser.parse())
+        try {
+            val lexer = Lexer(CodeIterator(it))
+            val parser = Parser(LexerIterator(lexer))
+            val interpreter = Interpreter()
+            interpreter.visit(parser.parse())
+        } catch (e: Exception) {
+            println(e.message)
+        }
     }
 }

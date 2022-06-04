@@ -16,36 +16,36 @@ class ParserIntegrationTest: FunSpec({
                         VarDeclarationStatement("iterator", Int::class, IntConstant(1)),
                         WhileStatement(
                             LesserThanExpression(
-                                Variable("iterator"),
-                                Variable("number")
+                                VariableReference("iterator"),
+                                VariableReference("number")
                             ),
                             listOf(
                                 IfStatement(
                                     NormalComparisonExpression(
                                         ModuloExpression(
-                                            Variable("number"),
-                                            Variable("iterator")
+                                            VariableReference("number"),
+                                            VariableReference("iterator")
                                         ),
                                         IntConstant(0)
                                     ),
                                     listOf(
                                         SumAssignmentStatement(
-                                            Variable("count"),
-                                            Variable("iterator")
+                                            VariableReference("count"),
+                                            VariableReference("iterator")
                                         )
                                     ),
                                     null
                                 ),
                                 SumAssignmentStatement(
-                                    Variable("iterator"),
+                                    VariableReference("iterator"),
                                     IntConstant(1)
                                 )
                             )
                         ),
                         ReturnStatement(
                             NormalComparisonExpression(
-                                Variable("count"),
-                                Variable("number")
+                                VariableReference("count"),
+                                VariableReference("number")
                             )
                         )
                     )
@@ -57,7 +57,7 @@ class ParserIntegrationTest: FunSpec({
                             FunctionCallExpression(
                                 "isPerfectNumber",
                                 listOf(
-                                    CastExpression(Variable("number"), Int::class)
+                                    CastExpression(VariableReference("number"), Int::class)
                                 )
                             )
                         )

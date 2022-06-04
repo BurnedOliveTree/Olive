@@ -1,5 +1,7 @@
 package interpreter
 
+import kotlin.reflect.KClass
+
 abstract class SemanticsError(protected val currentFunction: String): Exception()
 
 class MissingDeclarationException(currentFunction: String, private val expectedDeclaration: String): SemanticsError(currentFunction) {
@@ -7,9 +9,9 @@ class MissingDeclarationException(currentFunction: String, private val expectedD
         get() = "error occurred in $currentFunction: expected a declaration of $expectedDeclaration"
 }
 
-class TypeException(currentFunction: String, private val exceptedTypedValue: TypedValue, private val actualTypedValue: TypedValue): SemanticsError(currentFunction) {
+class TypeException(currentFunction: String, private val exceptedTypedValue: KClass<out Any>, private val actualTypedValue: KClass<out Any>): SemanticsError(currentFunction) {
     override val message: String
-        get() = "error occurred in $currentFunction: expected a value of ${exceptedTypedValue.value!!::class}, got ${actualTypedValue.value!!::class} instead"
+        get() = "error occurred in $currentFunction: expected a value of $exceptedTypedValue, got $actualTypedValue instead"
 }
 
 class ConflictingDeclarationException(currentFunction: String, private val conflictingName: String): SemanticsError(currentFunction) {

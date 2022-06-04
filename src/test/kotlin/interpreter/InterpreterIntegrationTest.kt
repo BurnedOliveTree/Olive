@@ -29,7 +29,7 @@ class InterpreterIntegrationTest: FunSpec({
             val interpreter = Interpreter()
             interpreter.setFunction(program.funDeclarations)
             interpreter.visit(FunctionCallExpression("chainCall", listOf(IntConstant(6))))
-            interpreter.environment.pop().value shouldBe 55
+            interpreter.environment.pop().value shouldBe 100
         }
     }
 })

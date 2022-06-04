@@ -9,9 +9,14 @@ class Interpreter: Visitor() {
     internal val environment = Environment()
 
     internal fun setFunction(functions: List<Function>) {
-        val duplicates = functions.groupBy { it.name }.filter { it.value.size > 1 }
-        if (duplicates.isNotEmpty())
-            throw ConflictingDeclarationException(duplicates.keys.first(), duplicates.keys.first())
+        val funDuplicates = functions.groupBy { it.name }.filter { it.value.size > 1 }
+        if (funDuplicates.isNotEmpty())
+            throw ConflictingDeclarationException(funDuplicates.keys.first(), funDuplicates.keys.first())
+        functions.forEach { function ->
+            val paramDuplicates = function.parameters.groupBy { it.name }.filter { it.value.size > 1 }
+            if (paramDuplicates.isNotEmpty())
+                throw ConflictingDeclarationException(function.name, paramDuplicates.keys.first())
+        }
         this.functions = functions.associateBy { it.name }
     }
 
@@ -21,7 +26,7 @@ class Interpreter: Visitor() {
     }
 
     override fun visit(visitable: Function) {
-        val parameters = visitable.parameters.map { Triple(it.name, it.type, environment.pop()) }
+        val parameters = visitable.parameters.reversed().map { Triple(it.name, it.type, environment.pop()) }
         environment.functionCall(visitable.name)
         parameters.forEach { environment.variableDeclare(it.first, it.second, it.third) }
         for (statement in visitable.block) {
@@ -69,12 +74,14 @@ class Interpreter: Visitor() {
     override fun visit(visitable: WhileStatement) {
         environment.blockEnter()
         visit(visitable.condition)
-        while ((environment.pop() as TypedValue.Bool).value!! && !environment.isReturn()) {
+        while ((environment.pop() as TypedValue.Bool).value!!) {
             for (statement in visitable.whileBlock) {
                 visit(statement)
                 if (environment.isReturn())
                     break
             }
+            if (environment.isReturn())
+                break
             visit(visitable.condition)
         }
         environment.blockLeave()
@@ -99,9 +106,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! + right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: DifferenceAssignmentStatement) {
@@ -113,9 +120,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! - right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: MultiplicationAssignmentStatement) {
@@ -127,9 +134,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! * right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: DivisionAssignmentStatement) {
@@ -143,9 +150,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! / right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: ModuloAssignmentStatement) {
@@ -159,9 +166,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! % right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: ExponentAssignmentStatement) {
@@ -175,9 +182,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!!.pow(right.value!!)))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: RootAssignmentStatement) {
@@ -191,9 +198,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!!.pow(1 / right.value!!)))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: FunctionCallStatement) {
@@ -203,6 +210,11 @@ class Interpreter: Visitor() {
 
     override fun visit(visitable: ReturnStatement) {
         visit(visitable.expression)
+        val returnType = environment.peek().toType()
+        val functionType = (functions[environment.functionName()] ?: throw IllegalStateException()).type
+        if (returnType != functionType) {
+            throw TypeException(environment.functionName(), functionType, returnType)
+        }
         environment.setReturn()
     }
 
@@ -215,7 +227,7 @@ class Interpreter: Visitor() {
         visit(visitable.left)
         val left = environment.pop()
         if (left !is TypedValue.Bool)
-            throw TypeException(environment.functionName(), Boolean::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Boolean::class, left.toType())
         else
             if (left.value!!) {
                 environment.push(TypedValue.Bool(true))
@@ -223,7 +235,7 @@ class Interpreter: Visitor() {
                 visit(visitable.right)
                 val right = environment.pop()
                 if (right !is TypedValue.Bool)
-                    throw TypeException(environment.functionName(), Boolean::class.toTypedNull(), right)
+                    throw TypeException(environment.functionName(), Boolean::class, right.toType())
                 environment.push(TypedValue.Bool(right.value!!))
             }
     }
@@ -232,7 +244,7 @@ class Interpreter: Visitor() {
         visit(visitable.left)
         val left = environment.pop()
         if (left !is TypedValue.Bool)
-            throw TypeException(environment.functionName(), Boolean::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Boolean::class, left.toType())
         else
             if (!left.value!!) {
                 environment.push(TypedValue.Bool(false))
@@ -240,7 +252,7 @@ class Interpreter: Visitor() {
                 visit(visitable.right)
                 val right = environment.pop()
                 if (right !is TypedValue.Bool)
-                    throw TypeException(environment.functionName(), Boolean::class.toTypedNull(), right)
+                    throw TypeException(environment.functionName(), Boolean::class, right.toType())
                 environment.push(TypedValue.Bool(right.value!!))
             }
     }
@@ -251,7 +263,7 @@ class Interpreter: Visitor() {
         val right = environment.pop()
         val left = environment.pop()
         if (left::class != right::class)
-            throw TypeException(environment.functionName(), right, left)
+            throw TypeException(environment.functionName(), right.toType(), left.toType())
         environment.push(TypedValue.Bool(left.value!! == right.value!!))
     }
 
@@ -261,7 +273,7 @@ class Interpreter: Visitor() {
         val right = environment.pop()
         val left = environment.pop()
         if (left::class != right::class)
-            throw TypeException(environment.functionName(), right, left)
+            throw TypeException(environment.functionName(), right.toType(), left.toType())
         environment.push(TypedValue.Bool(left === right))
     }
 
@@ -269,7 +281,7 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val value = environment.pop()
         if (value !is TypedValue.Bool)
-            throw TypeException(environment.functionName(), TypedValue.Bool(null), value)
+            throw TypeException(environment.functionName(), Boolean::class, value.toType())
         environment.push(TypedValue.Bool(!value.value!!))
     }
 
@@ -288,9 +300,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.push(TypedValue.Bool(left.value!! < right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: LesserOrEqualExpression) {
@@ -303,9 +315,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.push(TypedValue.Bool(left.value!! <= right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: GreaterThanExpression) {
@@ -318,9 +330,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.push(TypedValue.Bool(left.value!! > right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: GreaterOrEqualExpression) {
@@ -333,9 +345,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.push(TypedValue.Bool(left.value!! >= right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: AddExpression) {
@@ -348,9 +360,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.push(TypedValue.Float(left.value!! + right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: SubtractExpression) {
@@ -363,9 +375,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.push(TypedValue.Float(left.value!! - right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: MultiplyExpression) {
@@ -378,9 +390,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.push(TypedValue.Float(left.value!! * right.value!!))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: DivideExpression) {
@@ -393,9 +405,9 @@ class Interpreter: Visitor() {
         } else if (left is TypedValue.Float && right is TypedValue.Float) {
             environment.push(TypedValue.Float(left.value!! / right.value!!))
         } else if (left is TypedValue.Int || left is TypedValue.Float) {
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         } else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: ModuloExpression) {
@@ -408,9 +420,9 @@ class Interpreter: Visitor() {
         } else if (left is TypedValue.Float && right is TypedValue.Float) {
             environment.push(TypedValue.Float(left.value!! % right.value!!))
         } else if (left is TypedValue.Int || left is TypedValue.Float) {
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         } else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: InverseExpression) {
@@ -418,7 +430,7 @@ class Interpreter: Visitor() {
         when (val value = environment.pop()) {
             is TypedValue.Int -> environment.push(TypedValue.Int(-value.value!!))
             is TypedValue.Float -> environment.push(TypedValue.Float(-value.value!!))
-            else -> throw TypeException(environment.functionName(), Int::class.toTypedNull(), value)
+            else -> throw TypeException(environment.functionName(), Number::class, value.toType())
         }
     }
 
@@ -432,9 +444,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.push(TypedValue.Float(left.value!!.pow(right.value!!)))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: RootExpression) {
@@ -447,9 +459,9 @@ class Interpreter: Visitor() {
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.push(TypedValue.Float(left.value!!.pow(1.0 / right.value!!)))
         else if (left is TypedValue.Int || left is TypedValue.Float)
-            throw TypeException(environment.functionName(), left, right)
+            throw TypeException(environment.functionName(), left.toType(), right.toType())
         else
-            throw TypeException(environment.functionName(), Int::class.toTypedNull(), left)
+            throw TypeException(environment.functionName(), Number::class, left.toType())
     }
 
     override fun visit(visitable: CastExpression) {
@@ -465,7 +477,7 @@ class Interpreter: Visitor() {
                 Double::class -> environment.push(TypedValue.Float(value.value!! as Double))
                 Boolean::class -> environment.push(TypedValue.Bool(value.value!! as Boolean))
                 String::class -> environment.push(TypedValue.String(value.value!! as String))
-                else -> throw TypeException(environment.functionName(), TypedValue.Int(null), value)
+                else -> throw TypeException(environment.functionName(), Any::class, value.toType())
             }
         }
     }
@@ -474,7 +486,7 @@ class Interpreter: Visitor() {
         throw IllegalStateException()
     }
 
-    override fun visit(visitable: Variable) {
+    override fun visit(visitable: VariableReference) {
         environment.push(environment.variableValue(visitable.name))
     }
 
@@ -534,7 +546,7 @@ class Interpreter: Visitor() {
             is ExponentExpression -> visit(visitable)
             is RootExpression -> visit(visitable)
             is CastExpression -> visit(visitable)
-            is Variable -> visit(visitable)
+            is VariableReference -> visit(visitable)
             is BoolConstant -> visit(visitable)
             is FloatConstant -> visit(visitable)
             is IntConstant -> visit(visitable)

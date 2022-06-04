@@ -2,8 +2,8 @@ add(first: Int, second: Int): Int {
     return first + second;
 }
 
-subtract(first: Int, second: Int): Int {
-    return first - second;
+subtract(first: Int, second: Int, third: Int): Int {
+    return first - second - third;
 }
 
 multiply(first: Int, second: Int): Int {
@@ -11,10 +11,10 @@ multiply(first: Int, second: Int): Int {
 }
 
 chainCall(number: Int): Int {
-    return number.add(2).multiply(7).subtract(1);
+    return number.add(2).multiply(7).subtract(5, 6).add(5).multiply(2);
 }
 
 main(): Unit {
     var number: Int = 6;
-    number.add(2).multiply(7).subtract(1);
+    chainCall(number);
 }

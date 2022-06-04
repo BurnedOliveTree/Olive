@@ -244,15 +244,15 @@ class Parser(private val iterator: BaseLexerIterator) {
             it ?: throw ExpectedOtherTokenException(iterator.current(), this::parseIdentifierStartedStatement.name, "expression")
         }
         return when (operator) {
-            TokenType.NormalAssignOp -> NormalAssignmentStatement(Variable(name), expression)
-            TokenType.ReferenceAssignOp -> ReferenceAssignmentStatement(Variable(name), expression)
-            TokenType.SumAssignOp -> SumAssignmentStatement(Variable(name), expression)
-            TokenType.DifferenceAssignOp -> DifferenceAssignmentStatement(Variable(name), expression)
-            TokenType.MultiplicationAssignOp -> MultiplicationAssignmentStatement(Variable(name), expression)
-            TokenType.DivisionAssignOp -> DivisionAssignmentStatement(Variable(name), expression)
-            TokenType.ModuloAssignOp -> ModuloAssignmentStatement(Variable(name), expression)
-            TokenType.ExponentAssignOp -> ExponentAssignmentStatement(Variable(name), expression)
-            TokenType.RootAssignOp -> RootAssignmentStatement(Variable(name), expression)
+            TokenType.NormalAssignOp -> NormalAssignmentStatement(VariableReference(name), expression)
+            TokenType.ReferenceAssignOp -> ReferenceAssignmentStatement(VariableReference(name), expression)
+            TokenType.SumAssignOp -> SumAssignmentStatement(VariableReference(name), expression)
+            TokenType.DifferenceAssignOp -> DifferenceAssignmentStatement(VariableReference(name), expression)
+            TokenType.MultiplicationAssignOp -> MultiplicationAssignmentStatement(VariableReference(name), expression)
+            TokenType.DivisionAssignOp -> DivisionAssignmentStatement(VariableReference(name), expression)
+            TokenType.ModuloAssignOp -> ModuloAssignmentStatement(VariableReference(name), expression)
+            TokenType.ExponentAssignOp -> ExponentAssignmentStatement(VariableReference(name), expression)
+            TokenType.RootAssignOp -> RootAssignmentStatement(VariableReference(name), expression)
             else -> throw IllegalStateException()
         }
     }
@@ -454,7 +454,7 @@ class Parser(private val iterator: BaseLexerIterator) {
         if (isTokenType(TokenType.Identifier)) {
             val name = iterator.current().value as String
             iterator.next()
-            return parseRestOfFunctionCall(name) ?: Variable(name)
+            return parseRestOfFunctionCall(name) ?: VariableReference(name)
         } else if (iterator.current().type.isConstant()) {
             val constant = when (iterator.current().type) {
                 TokenType.BoolConstant -> BoolConstant(iterator.current().value as Boolean)
@@ -483,7 +483,7 @@ class Parser(private val iterator: BaseLexerIterator) {
             FunctionCallExpression(name, arguments)
         } else {
             if (isTokenTypeThenConsume(TokenType.MemberReferenceSign))
-                parseChainCall(Variable(name))
+                parseChainCall(VariableReference(name))
                     ?: throw ExpectedOtherTokenException(iterator.current(), this::parseRestOfFunctionCall.name, "identifier")
             else
                 return null
@@ -504,7 +504,7 @@ class Parser(private val iterator: BaseLexerIterator) {
         ifTokenTypeThenConsumeElseException(TokenType.LeftParenthesesSign, this::parseChainCall.name)
         val arguments = parseArguments()
         ifTokenTypeThenConsumeElseException(TokenType.RightParenthesesSign, this::parseChainCall.name)
-        return FunctionCallExpression(newName, (arguments.toList() + expression).toList())
+        return FunctionCallExpression(newName, (listOf(expression) + arguments.toList()).toList())
     }
 
     // (expression (EnumerationSign expression)*)?;

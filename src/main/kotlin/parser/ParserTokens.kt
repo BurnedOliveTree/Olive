@@ -1,5 +1,6 @@
 package parser
 
+import interpreter.ConflictingDeclarationException
 import kotlin.reflect.KClass
 
 abstract class Visitor {
@@ -23,7 +24,7 @@ abstract class Visitor {
     abstract fun visit(visitable: ExponentExpression)
     abstract fun visit(visitable: RootExpression)
     abstract fun visit(visitable: CastExpression)
-    abstract fun visit(visitable: Variable)
+    abstract fun visit(visitable: VariableReference)
     abstract fun visit(visitable: BoolConstant)
     abstract fun visit(visitable: FloatConstant)
     abstract fun visit(visitable: IntConstant)
@@ -125,7 +126,7 @@ data class CastExpression(val expression: Expression, val type: KClass<out Any>)
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
-data class Variable(val name: String): Expression() {
+data class VariableReference(val name: String): Expression() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 data class BoolConstant(val value: Boolean): Expression() {
@@ -159,31 +160,31 @@ data class WhileStatement(val condition: Expression, val whileBlock: List<Statem
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
-data class NormalAssignmentStatement(val variable: Variable, val expression: Expression): Statement() {
+data class NormalAssignmentStatement(val variable: VariableReference, val expression: Expression): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
-data class ReferenceAssignmentStatement(val variable: Variable, val expression: Expression): Statement() {
+data class ReferenceAssignmentStatement(val variable: VariableReference, val expression: Expression): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
-data class SumAssignmentStatement(val variable: Variable, val expression: Expression): Statement() {
+data class SumAssignmentStatement(val variable: VariableReference, val expression: Expression): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
-data class DifferenceAssignmentStatement(val variable: Variable, val expression: Expression): Statement() {
+data class DifferenceAssignmentStatement(val variable: VariableReference, val expression: Expression): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
-data class MultiplicationAssignmentStatement(val variable: Variable, val expression: Expression): Statement() {
+data class MultiplicationAssignmentStatement(val variable: VariableReference, val expression: Expression): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
-data class DivisionAssignmentStatement(val variable: Variable, val expression: Expression): Statement() {
+data class DivisionAssignmentStatement(val variable: VariableReference, val expression: Expression): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
-data class ModuloAssignmentStatement(val variable: Variable, val expression: Expression): Statement() {
+data class ModuloAssignmentStatement(val variable: VariableReference, val expression: Expression): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
-data class ExponentAssignmentStatement(val variable: Variable, val expression: Expression): Statement() {
+data class ExponentAssignmentStatement(val variable: VariableReference, val expression: Expression): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
-data class RootAssignmentStatement(val variable: Variable, val expression: Expression): Statement() {
+data class RootAssignmentStatement(val variable: VariableReference, val expression: Expression): Statement() {
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
@@ -196,9 +197,19 @@ data class ReturnStatement(val expression: Expression): Statement() {
 }
 
 data class Function(val name: String, val type: KClass<out Any>, val parameters: List<TypedIdentifier>, val block: List<Statement>): Visitable() {
+    init {
+        val duplicates = parameters.groupBy { it.name }.filter { it.value.size > 1 }
+        if (duplicates.isNotEmpty())
+            throw ConflictingDeclarationException(duplicates.keys.first(), duplicates.keys.first())
+    }
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }
 
 data class Program(val funDeclarations: List<Function>, val exceptions: List<SyntaxError>): Visitable() {
+    init {
+        val duplicates = funDeclarations.groupBy { it.name }.filter { it.value.size > 1 }
+        if (duplicates.isNotEmpty())
+            throw ConflictingDeclarationException(duplicates.keys.first(), duplicates.keys.first())
+    }
     override fun accept(visitor: Visitor) { visitor.visit(this) }
 }

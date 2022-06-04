@@ -23,8 +23,10 @@ isPrime(number: Int): Bool {
     return true;
 }
 
+fun(first: Int, second: Int, third: Int): Int {
+    return first - second * third;
+}
+
 main(): Unit {
-    var number: Float = 6.5;
-    isPrime(7);
-    isPerfectNumber(number as Int);
+    fun(5, 1, 2).fun(4, 2).fun(-5, 1);
 }

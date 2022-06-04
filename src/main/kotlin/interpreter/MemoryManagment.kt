@@ -43,6 +43,16 @@ sealed class TypedValue {
             }
         }
     }
+
+    fun toType(): KClass<out Any> {
+        return when (this) {
+            is Int -> kotlin.Int::class
+            is Float -> Double::class
+            is Bool -> Boolean::class
+            is String -> kotlin.String::class
+            is Unit -> kotlin.Unit::class
+        }
+    }
 }
 
 fun KClass<out Any>.toTypedNull(): TypedValue {
@@ -62,13 +72,13 @@ class Scope {
     fun declare(name: String, type: KClass<out Any>, value: TypedValue?, functionName: String) {
         if (value != null)
             if (value.value!!::class != type)
-                throw TypeException(functionName, type.toTypedNull(), value)
+                throw TypeException(functionName, type, value.toType())
         variables[name] = value ?: type.toTypedNull()
     }
 
     fun assign(name: String, value: TypedValue, functionName: String) {
         if (value::class != variables[name]!!::class)
-            throw TypeException(functionName, variables[name]!!, value)
+            throw TypeException(functionName, variables[name]!!.toType(), value.toType())
         variables[name] = value
     }
 
@@ -146,6 +156,9 @@ class Environment {
 
     fun push(value: TypedValue) {
         stack.push(value)
+    }
+    fun peek(): TypedValue {
+        return stack.peek()
     }
     fun pop(): TypedValue {
         return stack.pop()
