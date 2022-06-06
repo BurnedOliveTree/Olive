@@ -19,7 +19,12 @@ class ConflictingDeclarationException(currentFunction: String, private val confl
         get() = "error occurred in $currentFunction: found a redeclaration of $conflictingName"
 }
 
-class IllegalOperationException(currentFunction: String, private val operation: String): SemanticsError(currentFunction) {
+class IllegalMathematicalOperationException(currentFunction: String, private val operation: String): SemanticsError(currentFunction) {
     override val message: String
-        get() = "error occurred in $currentFunction: tried to execute an illegal operation: $operation"
+        get() = "error occurred in $currentFunction: tried to execute an illegal mathematical operation: $operation"
+}
+
+class InvalidArgumentAmountException(currentFunction: String, private val functionName: String, private val actualAmount: Int): SemanticsError(currentFunction) {
+    override val message: String
+        get() = "error occurred in $currentFunction: tried to call function $functionName with $actualAmount arguments"
 }

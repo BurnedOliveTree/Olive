@@ -102,6 +102,7 @@ class Interpreter: Visitor() {
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
         if (left is TypedValue.Int && right is TypedValue.Int)
+            // TODO here and lower: TypedValue should not be created anew and assigned, it should be calculated in place
             environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!! + right.value!!))
         else if (left is TypedValue.Float && right is TypedValue.Float)
             environment.variableAssign(visitable.variable.name, TypedValue.Float(left.value!! + right.value!!))
@@ -143,8 +144,8 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (right.value == 0)
-            throw IllegalOperationException(environment.functionName(), "$left / $right")
+        if (right.value == 0 || right.value == 0.0)
+            throw IllegalMathematicalOperationException(environment.functionName(), "${left.value} / ${right.value}")
         if (left is TypedValue.Int && right is TypedValue.Int)
             environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!! / right.value!!))
         else if (left is TypedValue.Float && right is TypedValue.Float)
@@ -159,8 +160,8 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (right.value == 0)
-            throw IllegalOperationException(environment.functionName(), "$left / $right")
+        if (right.value == 0 || right.value == 0.0)
+            throw IllegalMathematicalOperationException(environment.functionName(), "${left.value} % ${right.value}")
         if (left is TypedValue.Int && right is TypedValue.Int)
             environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!! % right.value!!))
         else if (left is TypedValue.Float && right is TypedValue.Float)
@@ -175,8 +176,8 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (left.value == 0 && right.value == 0)
-            throw IllegalOperationException(environment.functionName(), "$left ^ $right")
+        if ((left.value == 0 || left.value == 0.0) && (right.value == 0 || right.value == 0.0))
+            throw IllegalMathematicalOperationException(environment.functionName(), "${left.value} ^ ${right.value}")
         if (left is TypedValue.Int && right is TypedValue.Int)
             environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!!.toDouble().pow(right.value!!).toInt()))
         else if (left is TypedValue.Float && right is TypedValue.Float)
@@ -191,8 +192,8 @@ class Interpreter: Visitor() {
         visit(visitable.expression)
         val right = environment.pop()
         val left = environment.variableValue(visitable.variable.name)
-        if (right.value == 0)
-            throw IllegalOperationException(environment.functionName(), "$left | $right")
+        if (right.value == 0 || right.value == 0.0)
+            throw IllegalMathematicalOperationException(environment.functionName(), "${left.value} | ${right.value}")
         if (left is TypedValue.Int && right is TypedValue.Int)
             environment.variableAssign(visitable.variable.name, TypedValue.Int(left.value!!.toDouble().pow(1 / right.value!!).toInt()))
         else if (left is TypedValue.Float && right is TypedValue.Float)
@@ -219,8 +220,11 @@ class Interpreter: Visitor() {
     }
 
     override fun visit(visitable: FunctionCallExpression) {
+        val function = functions[visitable.name] ?: throw MissingDeclarationException(environment.functionName(), visitable.name)
+        if (visitable.arguments.size != function.parameters.size)
+            throw InvalidArgumentAmountException(environment.functionName(), function.name, visitable.arguments.size)
         visitable.arguments.forEach { visit(it) }
-        visit(functions[visitable.name] ?: throw MissingDeclarationException(environment.functionName(), visitable.name))
+        visit(function)
     }
 
     override fun visit(visitable: OrExpression) {
@@ -400,6 +404,8 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
+        if (right.value == 0 || right.value == 0.0)
+            throw IllegalMathematicalOperationException(environment.functionName(), "${left.value} / ${right.value}")
         if (left is TypedValue.Int && right is TypedValue.Int) {
             environment.push(TypedValue.Int(left.value!! / right.value!!))
         } else if (left is TypedValue.Float && right is TypedValue.Float) {
@@ -415,6 +421,8 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
+        if (right.value == 0 || right.value == 0.0)
+            throw IllegalMathematicalOperationException(environment.functionName(), "${left.value} % ${right.value}")
         if (left is TypedValue.Int && right is TypedValue.Int) {
             environment.push(TypedValue.Int(left.value!! % right.value!!))
         } else if (left is TypedValue.Float && right is TypedValue.Float) {
@@ -439,6 +447,8 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
+        if ((left.value == 0 || left.value == 0.0) && (right.value == 0 || right.value == 0.0))
+            throw IllegalMathematicalOperationException(environment.functionName(), "${left.value} ^ ${right.value}")
         if (left is TypedValue.Int && right is TypedValue.Int)
             environment.push(TypedValue.Int(left.value!!.toDouble().pow(right.value!!).toInt()))
         else if (left is TypedValue.Float && right is TypedValue.Float)
@@ -454,6 +464,8 @@ class Interpreter: Visitor() {
         visit(visitable.right)
         val right = environment.pop()
         val left = environment.pop()
+        if (right.value == 0 || right.value == 0.0)
+            throw IllegalMathematicalOperationException(environment.functionName(), "${left.value} | ${right.value}")
         if (left is TypedValue.Int && right is TypedValue.Int)
             environment.push(TypedValue.Float(left.value!!.toDouble().pow(1.0 / right.value!!)))
         else if (left is TypedValue.Float && right is TypedValue.Float)

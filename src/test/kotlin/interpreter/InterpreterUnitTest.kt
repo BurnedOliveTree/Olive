@@ -175,13 +175,13 @@ class InterpreterUnitTest: FunSpec({
             ) to ConflictingDeclarationException::class,
             listOf(
                 VarDeclarationStatement("sample", Double::class, DivideExpression(FloatConstant(1.0), FloatConstant(0.0)))
-            ) to IllegalOperationException::class,
+            ) to IllegalMathematicalOperationException::class,
             listOf(
                 VarDeclarationStatement("sample", Double::class, ExponentExpression(FloatConstant(0.0), FloatConstant(0.0)))
-            ) to IllegalOperationException::class,
+            ) to IllegalMathematicalOperationException::class,
             listOf(
                 VarDeclarationStatement("sample", Double::class, RootExpression(FloatConstant(1.0), FloatConstant(0.0)))
-            ) to IllegalOperationException::class,
+            ) to IllegalMathematicalOperationException::class,
         ) { statement ->
             val interpreter = Interpreter()
             interpreter.setFunction(listOf(Function("main", Unit::class, listOf(), listOf())))

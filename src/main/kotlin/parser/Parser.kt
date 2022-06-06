@@ -16,6 +16,8 @@ class LexerIterator(private val lexer: Lexer): BaseLexerIterator() {
     override fun current() = current
     override fun next(): LexerToken {
         current = lexer.next()
+        while (current.type == TokenType.Comment)
+            current = lexer.next()
         return current
     }
 }
@@ -70,6 +72,7 @@ class Parser(private val iterator: BaseLexerIterator) {
             exceptions.add(ExpectedOtherTokenException(iterator.current(), functionName, tokenType.toString()))
         iterator.next()
     }
+    fun getException() = exceptions
 
     // funDeclaration+;
     fun parse(): Program {
